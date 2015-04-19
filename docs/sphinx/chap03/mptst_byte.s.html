@@ -1,0 +1,244 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mptst_byte.s - translation of 8-bit C aritmetic to assembly &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="nsc.s - Implement the Number Sequencing Computering in PIC24 assembly." href="../chap04/nsc.s.html" />
+    <link rel="prev" title="mptst_word.s - translation of 16-bit C aritmetic to assembly" href="mptst_word.s.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../chap04/nsc.s.html" title="nsc.s - Implement the Number Sequencing Computering in PIC24 assembly."
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mptst_word.s.html" title="mptst_word.s - translation of 16-bit C aritmetic to assembly"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="mptst-byte-s-translation-of-8-bit-c-aritmetic-to-assembly">
+<h1>mptst_byte.s - translation of 8-bit <em>C</em> aritmetic to assembly<a class="headerlink" href="#mptst-byte-s-translation-of-8-bit-c-aritmetic-to-assembly" title="Permalink to this headline">¶</a></h1>
+<p>Like <a class="reference internal" href="mptst_word.s.html"><em>mptst_word.s - translation of 16-bit C aritmetic to assembly</em></a>, this file demonstrates translating a <em>C</em> program into assembly; however, this <em>C</em> project uses 8-bit, rather than 16-bit, values.</p>
+<div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11</pre></div></td><td class="code"><div class="highlight"><pre><span class="kt">uint8_t</span> <span class="n">u8_i</span><span class="p">;</span>
+<span class="kt">uint8_t</span> <span class="n">u8_j</span><span class="p">;</span>
+<span class="kt">uint8_t</span> <span class="n">u8_k</span><span class="p">;</span>
+
+<span class="kt">void</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">u8_i</span> <span class="o">=</span> <span class="mi">100</span><span class="p">;</span>           <span class="c1">// u8_i = 64 (0x64).</span>
+  <span class="n">u8_i</span> <span class="o">=</span> <span class="n">u8_i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>      <span class="c1">// u8_i++, so u8_i = 101 (0x65).</span>
+  <span class="n">u8_j</span> <span class="o">=</span> <span class="n">u8_i</span><span class="p">;</span>          <span class="c1">// u8_j is 101 (0x65).</span>
+  <span class="n">u8_j</span> <span class="o">=</span> <span class="n">u8_j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>      <span class="c1">// u8_j--, so u8_j is 100 (0x64).</span>
+  <span class="n">u8_k</span> <span class="o">=</span> <span class="n">u8_j</span> <span class="o">+</span> <span class="n">u8_i</span><span class="p">;</span>   <span class="c1">// u8_k = 201 (0xC9).</span>
+<span class="p">}</span>
+</pre></div>
+</td></tr></table></div>
+<div class="section" id="declare-variables">
+<h2>Declare variables<a class="headerlink" href="#declare-variables" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-nasm"><div class="highlight"><pre>
+<span class="nf">.bss</span>
+</pre></div>
+</div>
+<p>Reserve one byte (8 bits) for each variable using the <tt class="docutils literal"><span class="pre">.space</span></tt> directive.</p>
+<div class="highlight-nasm"><div class="highlight"><pre>
+<span class="c1">;; uint8_t u8_i;</span>
+<span class="nl">u8_i:</span>   <span class="nf">.space</span> <span class="mi">1</span>
+<span class="c1">;; uint8_t u8_j;</span>
+<span class="nl">u8_j:</span>   <span class="nf">.space</span> <span class="mi">1</span>
+<span class="c1">;; uint8_t u8_k;</span>
+<span class="nl">u8_k:</span>   <span class="nf">.space</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<p>This isn&#8217;t used, but makes the MPLAB X v. 1.80 watch window display the size of the <tt class="docutils literal"><span class="pre">u8_k</span></tt> variable above correctly.</p>
+<div class="highlight-nasm"><div class="highlight"><pre>
+<span class="nl">u8_bug:</span> <span class="nf">.space</span> <span class="mi">2</span>
+
+</pre></div>
+</div>
+</div>
+<div class="section" id="code">
+<h2>Code<a class="headerlink" href="#code" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-nasm"><div class="highlight"><pre>
+<span class="nf">.text</span>
+<span class="nf">.global</span> <span class="nv">__reset</span>
+<span class="nl">__reset:</span>
+
+  <span class="c1">;;  W0     W0</span>
+  <span class="c1">;; u8_i = 100;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Input</div></blockquote>
+</div></blockquote>
+<div class="highlight-nasm"><div class="highlight"><pre>
+  mov.b #100, W0
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Output. <strong>Important note:</strong> When MOVing directly from memory to register or vice versa, you must always target WREG (the 8-bit name for W0). You may not use W1, W2, etc.</div></blockquote>
+</div></blockquote>
+<div class="highlight-nasm"><div class="highlight"><pre>
+  <span class="nf">mov.b</span> <span class="nv">WREG</span><span class="p">,</span> <span class="nv">u8_i</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>This statement requires no register assignments.</div></blockquote>
+</div></blockquote>
+<div class="highlight-nasm"><div class="highlight"><pre>
+  <span class="c1">;; u8_i = u8_i + 1;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Input, process, and output</div></blockquote>
+</div></blockquote>
+<div class="highlight-nasm"><div class="highlight"><pre>
+  <span class="nf">inc.b</span>  <span class="nv">u8_i</span>
+
+  <span class="c1">;;  W0     W0</span>
+  <span class="c1">;; u8_j = u8_i</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Input. As discussed above, this 8-bit operation <strong>must</strong> target WREG.</div></blockquote>
+</div></blockquote>
+<div class="highlight-nasm"><div class="highlight"><pre>
+  <span class="nf">mov.b</span>   <span class="nv">u8_i</span><span class="p">,</span> <span class="nv">WREG</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Output</div></blockquote>
+</div></blockquote>
+<div class="highlight-nasm"><div class="highlight"><pre>
+  <span class="nf">mov.b</span>   <span class="nv">WREG</span><span class="p">,</span> <span class="nv">u8_j</span>
+
+  <span class="c1">;; u8_j = u8_j - 1;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Input, process, and output</div></blockquote>
+</div></blockquote>
+<div class="highlight-nasm"><div class="highlight"><pre>
+  <span class="nf">dec.b</span>   <span class="nv">u8_j</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>To make this a bit easier, we&#8217;ll re-use W0 to hold both u8_j and u8_k.</div></blockquote>
+</div></blockquote>
+<div class="highlight-nasm"><div class="highlight"><pre>
+  <span class="c1">;;  W0     W0     W1</span>
+  <span class="c1">;; u8_k = u8_j + u8_i</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Input. First, load u8_i, since it overwrites WREG; then, load u8_j into WREG.</div></blockquote>
+</div></blockquote>
+<div class="highlight-nasm"><div class="highlight"><pre>
+  <span class="nf">mov.b</span> <span class="nv">u8_i</span><span class="p">,</span> <span class="nv">WREG</span>
+  <span class="nf">mov.b</span> <span class="nv">W0</span><span class="p">,</span> <span class="nv">W1</span>
+  <span class="nf">mov.b</span> <span class="nv">u8_j</span><span class="p">,</span> <span class="nv">WREG</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Process</div></blockquote>
+</div></blockquote>
+<div class="highlight-nasm"><div class="highlight"><pre>
+  <span class="nf">add.b</span> <span class="nv">W0</span><span class="p">,</span> <span class="nv">W1</span><span class="p">,</span> <span class="nv">W0</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Output</div></blockquote>
+</div></blockquote>
+<div class="highlight-nasm"><div class="highlight"><pre>
+  <span class="nf">mov.b</span> <span class="nv">WREG</span><span class="p">,</span> <span class="nv">u8_k</span>
+
+<span class="nl">done:</span>
+  <span class="nf">goto</span>     <span class="nv">done</span>    <span class="c1">;Place holder for last line of executed code</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../chap04/nsc.s.html" title="nsc.s - Implement the Number Sequencing Computering in PIC24 assembly."
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mptst_word.s.html" title="mptst_word.s - translation of 16-bit C aritmetic to assembly"
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

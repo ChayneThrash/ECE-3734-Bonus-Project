@@ -1,0 +1,143 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>bytes2aschex_asm.s &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="div_asm_tests.s" href="div_asm_tests.s.html" />
+    <link rel="prev" title="bytes2aschex.c" href="byte2aschex.c.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="div_asm_tests.s.html" title="div_asm_tests.s"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="byte2aschex.c.html" title="bytes2aschex.c"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="bytes2aschex-asm-s">
+<h1>bytes2aschex_asm.s<a class="headerlink" href="#bytes2aschex-asm-s" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-nasm"><div class="highlight"><pre>
+
+.include &quot;p24Hxxxx.inc&quot;
+
+.global __reset          ;The label for the first line of code.
+
+
+         .data            ;unitialized data section
+
+         .bss
+;;These start at location 0x0800 because 0-0x07FF reserved for SFRs
+u8_buf:   .space 2        ;Allocating space (in bytes) to variable.
+
+.text                          ;Start of Code section
+__reset:                       ; first instruction located at __reset label
+       mov #__SP_init, w15     ;Initalize the Stack Pointer
+       mov #__SPLIM_init,W0
+       mov W0, SPLIM           ;Initialize the stack limit register
+       rcall main              ;call main()
+       reset                   ;start over
+ ;__SP_init set by linker to be after allocated data
+
+main:
+      mov #0x9A,W0
+      mov #u8_buf,W1
+      rcall byte2aschex
+
+done:                     ;do not return
+       bra done
+
+;;Convert lower 4-bits of W0 to ASCII Hex
+nyb2aschex:
+      mov.b #0x30,W2   ;offset for &#39;0&#39; to &#39;9&#39; digit
+      cp.b W0,#10      ; W0  &gt;= 10?
+      bra LTU, nyb_1   ; branch if W0 &lt; 10
+      mov.b #0x37,W2   ;offset for &#39;A&#39; to &#39;F&#39; digit
+nyb_1:
+      add.b W0,W2,W0
+      return
+
+;;W0 is byte to be converted
+;;W1 points to temp buffer that can hold 2 bytes
+byte2aschex:
+      ;do most significant digit
+      push  W0          ;save
+      lsr   W0,#4,W0    ;do upper 4-bits
+      and.b W0,#0x0F,W0 ; mask off upper bits
+      rcall nyb2aschex
+      mov.b W0,[W1++]   ;save return value
+      pop W0            ;restore
+      ;do least significant digit
+      and.b W0,#0x0F,W0 ; mask off upper bits
+      rcall nyb2aschex
+      mov.b W0,[W1]     ;save return value
+      return
+
+    .end
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="div_asm_tests.s.html" title="div_asm_tests.s"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="byte2aschex.c.html" title="bytes2aschex.c"
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

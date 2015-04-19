@@ -1,0 +1,137 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>SCons_zipit.py - Build docs then create a .zip for distribution &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="index.html" />
+    <link rel="up" title="SConstruct.py - Build all libraries and examples over many chips" href="SConstruct.py.html" />
+    <link rel="next" title="SConscript.py - Build source files from template" href="templates/SConscript.py.html" />
+    <link rel="prev" title="SCons_esos.py - Build ESOS chapter 14 applications" href="SCons_esos.py.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="templates/SConscript.py.html" title="SConscript.py - Build source files from template"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="SCons_esos.py.html" title="SCons_esos.py - Build ESOS chapter 14 applications"
+             accesskey="P">previous</a> |</li>
+        <li><a href="contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="utilities.html" >Utilities</a> &raquo;</li>
+          <li><a href="SConstruct.py.html" accesskey="U">SConstruct.py - Build all libraries and examples over many chips</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="scons-zipit-py-build-docs-then-create-a-zip-for-distribution">
+<h1>SCons_zipit.py - Build docs then create a .zip for distribution<a class="headerlink" href="#scons-zipit-py-build-docs-then-create-a-zip-for-distribution" title="Permalink to this headline">¶</a></h1>
+<p>Bring in path for SCons use.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+import os
+env = Environment(ENV = {&#39;PATH&#39; : os.environ[&#39;PATH&#39;]})
+
+</pre></div>
+</div>
+<p>Update docs.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+env.Execute(&#39;doxygen&#39;)
+
+</pre></div>
+</div>
+<p>Copy updated CodeChat docs into Doxygen output.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+env.Execute(&#39;sphinx-build -d _build\\doctrees . _build\\html&#39;)
+env.Execute(Delete(&#39;docs/sphinx&#39;, must_exist = 0))
+env.Execute(Copy(&#39;docs/sphinx&#39;, &#39;_build/html&#39;))
+
+
+</pre></div>
+</div>
+<p>Define a single target to build the zip file.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+zip_file = &#39;../pic24_code_examples.zip&#39;
+env.Default(env.Zip(zip_file, [
+  &#39;readme.txt&#39;,
+  &#39;standard_header.txt&#39;,
+  &#39;bin&#39;,
+  &#39;bootloader&#39;,
+  &#39;docs&#39;,
+  &#39;hex&#39;,
+  &#39;chap03&#39;,
+  &#39;chap04&#39;,
+  &#39;chap06&#39;,
+  &#39;chap07&#39;,
+  &#39;chap08&#39;,
+  &#39;chap09&#39;,
+  &#39;chap10&#39;,
+  &#39;chap11&#39;,
+  &#39;chap12&#39;,
+  &#39;chap13&#39;,
+  &#39;chap14&#39;,
+  &#39;esos&#39;,
+  &#39;lib/lkr&#39;,
+  &#39;lib/src&#39;,
+  &#39;lib/include&#39;,
+  &#39;explorer16_100p&#39;,
+  &#39;util&#39; ]))
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="templates/SConscript.py.html" title="SConscript.py - Build source files from template"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="SCons_esos.py.html" title="SCons_esos.py - Build ESOS chapter 14 applications"
+             >previous</a> |</li>
+        <li><a href="contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="utilities.html" >Utilities</a> &raquo;</li>
+          <li><a href="SConstruct.py.html" >SConstruct.py - Build all libraries and examples over many chips</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

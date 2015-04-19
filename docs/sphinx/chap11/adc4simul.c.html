@@ -1,0 +1,232 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>adc4simul.c - Simultaneous sampling of 4 channels (only for PIC24 CPUs without DMA) &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="adc_spidac_test.c - Demonstrates reading the internal ADC in 12-bit mode and then sending the upper 8 bits to an external 8-bit SPI DAC (MAXIM 548A)" href="adc_spidac_test.c.html" />
+    <link rel="prev" title="adc7scan2.c - Above plus uses double buffering (only for PIC24 CPUs without DMA)" href="adc7scan2.c.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="adc_spidac_test.c.html" title="adc_spidac_test.c - Demonstrates reading the internal ADC in 12-bit mode and then sending the upper 8 bits to an external 8-bit SPI DAC (MAXIM 548A)"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="adc7scan2.c.html" title="adc7scan2.c - Above plus uses double buffering (only for PIC24 CPUs without DMA)"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="adc4simul-c-simultaneous-sampling-of-4-channels-only-for-pic24-cpus-without-dma">
+<h1>adc4simul.c - Simultaneous sampling of 4 channels (only for PIC24 CPUs without DMA)<a class="headerlink" href="#adc4simul-c-simultaneous-sampling-of-4-channels-only-for-pic24-cpus-without-dma" title="Permalink to this headline">¶</a></h1>
+<p>Simultaneously samples four channels and uses a timer used to trigger conversions.
+Ping-pong buffering is used.
+Conversion results are printed to screen.
+(HEX values and voltages are printed.)
+This is only for PIC24 CPUs without DMA.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+
+<span class="cp">#include &quot;pic24_all.h&quot;</span>
+<span class="cp">#include &quot;stdio.h&quot;</span>
+
+<span class="cp">#ifdef _DMA0IF</span>
+<span class="cp"># warning &quot;This processor selection has the DMA module; this code example is incompatible with a PIC24 CPU that has DMA.&quot;</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="cp">#else</span>
+
+</pre></div>
+</div>
+<p>setup an output to help us measure ADC IRQ responses</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="cp">#define CONFIG_LED2()       CONFIG_RB5_AS_DIG_OUTPUT()</span>
+<span class="cp">#define LED2                _LATB5</span>
+
+<span class="cp">#define   ADC_LEN           10</span>
+<span class="cp">#define   ADC_NSTEPS        1024</span>
+<span class="cp">#define   ADC_12BIT_FLAG    0</span>
+
+<span class="kt">uint16_t</span>              <span class="n">au16_buffer</span><span class="p">[</span><span class="mi">8</span><span class="p">];</span>
+<span class="k">volatile</span>  <span class="kt">uint16_t</span>    <span class="n">au16_sum</span><span class="p">[</span><span class="mi">8</span><span class="p">];</span>
+<span class="k">volatile</span>  <span class="kt">uint8_t</span>     <span class="n">u8_gotData</span><span class="p">;</span>
+
+<span class="cm">/***</span>
+<span class="cm"> *** HERE IS THE CODE!</span>
+<span class="cm"> ***</span>
+<span class="cm"> ***/</span>
+<span class="kt">void</span> <span class="n">_ISR</span> <span class="nf">_ADC1Interrupt</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">static</span> <span class="kt">uint8_t</span>      <span class="n">u8_adcCount</span><span class="o">=</span><span class="mi">64</span><span class="p">;</span>
+  <span class="kt">uint8_t</span>             <span class="n">u8_i</span><span class="p">;</span>
+  <span class="kt">uint16_t</span><span class="o">*</span>           <span class="n">au16_adcHWBuff</span> <span class="o">=</span> <span class="p">(</span><span class="kt">uint16_t</span><span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">ADC1BUF0</span><span class="p">;</span>
+
+  <span class="cm">/* If ADC is writing in the 2nd half of the buffer, so determine which</span>
+<span class="cm">   * half of the buffer is valid (and caused this interrupt), then fetch</span>
+<span class="cm">   * that half into our local array of ADC results.</span>
+<span class="cm">   */</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">AD1CON2</span> <span class="o">&amp;</span> <span class="n">ADC_ALT_BUF_STATUS_2</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span> <span class="n">u8_i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">au16_buffer</span><span class="p">[</span><span class="n">u8_i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">au16_adcHWBuff</span><span class="p">[</span><span class="n">u8_i</span><span class="p">];</span>
+    <span class="p">}</span> <span class="c1">//end for()</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span> <span class="n">u8_i</span><span class="o">=</span><span class="mi">8</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">&lt;</span><span class="mi">16</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">au16_buffer</span><span class="p">[</span><span class="n">u8_i</span><span class="o">-</span><span class="mi">8</span><span class="p">]</span> <span class="o">+=</span> <span class="n">au16_adcHWBuff</span><span class="p">[</span><span class="n">u8_i</span><span class="p">];</span>
+    <span class="p">}</span> <span class="c1">//end for()</span>
+  <span class="p">}</span> <span class="c1">// end if-else</span>
+
+  <span class="n">_AD1IF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>                   <span class="c1">//clear the interrupt flag</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>we got the data, so start the sampling process again</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">SET_SAMP_BIT_ADC1</span><span class="p">();</span>
+
+  <span class="n">u8_adcCount</span><span class="o">--</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">u8_adcCount</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">u8_adcCount</span> <span class="o">=</span> <span class="mi">64</span><span class="p">;</span>
+    <span class="n">u8_gotData</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span> <span class="n">u8_i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">au16_sum</span><span class="p">[</span><span class="n">u8_i</span><span class="p">]</span> <span class="o">=</span> <span class="n">au16_buffer</span><span class="p">[</span><span class="n">u8_i</span><span class="p">];</span>
+      <span class="n">au16_buffer</span><span class="p">[</span><span class="n">u8_i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span> <span class="c1">//end for()</span>
+  <span class="p">};</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>toggle an LED so we can measure how often ADC IRQs are coming in</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">LED2</span> <span class="o">=</span> <span class="o">!</span><span class="n">LED2</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="n">main</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">uint8_t</span>   <span class="n">u8_i</span><span class="p">;</span>
+  <span class="kt">uint16_t</span>  <span class="n">u16_pot</span><span class="p">;</span>
+  <span class="kt">uint32_t</span>  <span class="n">u32_ticks</span><span class="p">;</span>
+  <span class="kt">float</span>   <span class="n">f_pot</span><span class="p">;</span>
+
+  <span class="n">configBasic</span><span class="p">(</span><span class="n">HELLO_MSG</span><span class="p">);</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>make RA0/AN0/VREF+ a digital input to kill the pullup and
+set the TRISA bit, then make it ANALOG so the ADC will work</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">CONFIG_RA0_AS_ANALOG</span><span class="p">();</span>
+  <span class="n">CONFIG_RA1_AS_ANALOG</span><span class="p">();</span>
+  <span class="n">CONFIG_RB0_AS_ANALOG</span><span class="p">();</span>
+  <span class="n">CONFIG_RB12_AS_ANALOG</span><span class="p">();</span>
+
+  <span class="n">CONFIG_LED2</span><span class="p">();</span>
+
+  <span class="n">u8_gotData</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>configure T2/T3 as 32-bit timer to trigger every 1/64 second</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">T3CONbits</span><span class="p">.</span><span class="n">TON</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">T2CONbits</span><span class="p">.</span><span class="n">TON</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">T2CON</span> <span class="o">=</span> <span class="n">T2_32BIT_MODE_ON</span> <span class="o">|</span> <span class="n">T2_PS_1_1</span> <span class="o">|</span> <span class="n">T2_SOURCE_INT</span><span class="p">;</span>
+  <span class="n">TMR3</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">TMR2</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">u32_ticks</span> <span class="o">=</span> <span class="n">usToU32Ticks</span><span class="p">(</span><span class="mi">15625</span><span class="p">,</span> <span class="n">getTimerPrescale</span><span class="p">(</span><span class="n">T2CONbits</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>     <span class="c1">// # of ticks for 1/64 seconds</span>
+  <span class="n">PR3</span> <span class="o">=</span> <span class="n">u32_ticks</span><span class="o">&gt;&gt;</span><span class="mi">16</span><span class="p">;</span>
+  <span class="n">PR2</span> <span class="o">=</span> <span class="n">u32_ticks</span> <span class="o">&amp;</span> <span class="mh">0xFFFF</span><span class="p">;</span>
+  <span class="n">T2CONbits</span><span class="p">.</span><span class="n">TON</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+
+  <span class="n">configADC1_Simul4ChanIrq</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="n">ADC_CH123_POS_SAMPLEA_AN0AN1AN2</span><span class="p">,</span> <span class="n">ADC_CONV_CLK_10Tcy</span> <span class="p">);</span>
+  <span class="n">SET_SAMP_BIT_ADC1</span><span class="p">();</span>
+
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">u8_gotData</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">doHeartbeat</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="n">u8_gotData</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span> <span class="n">u8_i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">&lt;</span><span class="mi">4</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">u16_pot</span> <span class="o">=</span> <span class="n">au16_sum</span><span class="p">[</span><span class="n">u8_i</span><span class="p">];</span>
+      <span class="n">f_pot</span> <span class="o">=</span> <span class="p">(</span><span class="mf">3.3</span> <span class="o">/</span> <span class="mi">1023</span> <span class="o">/</span> <span class="mi">64</span> <span class="p">)</span> <span class="o">*</span> <span class="n">u16_pot</span><span class="p">;</span>
+      <span class="n">printf</span><span class="p">(</span><span class="s">&quot;r&quot;</span><span class="p">);</span>
+      <span class="n">outChar</span><span class="p">(</span> <span class="sc">&#39;0&#39;</span><span class="o">+</span><span class="n">u8_i</span> <span class="p">);</span>
+      <span class="n">printf</span><span class="p">(</span><span class="s">&quot;:0x%04X=%1.3fV  &quot;</span><span class="p">,</span>  <span class="n">u16_pot</span><span class="p">,</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span> <span class="n">f_pot</span> <span class="p">);</span>
+    <span class="p">}</span> <span class="c1">//end for()</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="p">}</span> <span class="c1">//endof while()</span>
+<span class="p">}</span> <span class="c1">// endof main()</span>
+<span class="cp">#endif</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="adc_spidac_test.c.html" title="adc_spidac_test.c - Demonstrates reading the internal ADC in 12-bit mode and then sending the upper 8 bits to an external 8-bit SPI DAC (MAXIM 548A)"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="adc7scan2.c.html" title="adc7scan2.c - Above plus uses double buffering (only for PIC24 CPUs without DMA)"
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

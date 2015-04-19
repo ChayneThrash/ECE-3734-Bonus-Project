@@ -1,0 +1,130 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mult_asm_tests - test some multiply combinations &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="sat_add.c - Demonstrate saturating addition" href="sat_add.s.html" />
+    <link rel="prev" title="mult_32x32_uns - Demonstrate unsigned 32 bit multiplication" href="mult_32x32_uns.s.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="sat_add.s.html" title="sat_add.c - Demonstrate saturating addition"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mult_32x32_uns.s.html" title="mult_32x32_uns - Demonstrate unsigned 32 bit multiplication"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="mult-asm-tests-test-some-multiply-combinations">
+<h1>mult_asm_tests - test some multiply combinations<a class="headerlink" href="#mult-asm-tests-test-some-multiply-combinations" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-nasm"><div class="highlight"><pre>
+
+.include &quot;p24Hxxxx.inc&quot;
+
+.global __reset          ;The label for the first line of code.
+
+
+         .data            ;unitialized data section
+
+         .bss
+;;These start at location 0x0800 because 0-0x07FF reserved for SFRs
+u16_k:   .space 2        ;Allocating space (in bytes) to variable.
+u8_j:    .space 1        ;Allocating space (in bytes) to variable.
+
+.text                          ;Start of Code section
+__reset:                       ; first instruction located at __reset label
+       mov #__SP_init, w15     ;Initalize the Stack Pointer
+       mov #__SPLIM_init,W0
+       mov W0, SPLIM           ;Initialize the stack limit register
+       rcall main              ;call main()
+       reset                   ;start over
+ ;__SP_init set by linker to be after allocated data
+
+main:
+      mov #0xFFFF,W0  ; 65535 unsigned, -1 signed
+      mov #0x1,W1     ; 1 unsigned, +1 signed
+
+      mul.uu W0,W0,W2  ;65535 * 65535 = 4294836225 = 0xFFFE0001 = W3:W2
+      mul.ss W0,W0,W4  ;-1 * -1 = +1 = 0x00000001 = W5:W4
+      mul.uu W0,W1,W6  ;65535 * 1 = 65535 = 0x0000FFFF = W7:W6
+      mul.ss W0,W1,W8  ;-1 * 1 = -1 = 0xFFFFFFFF = W9:W8
+      mul.uu W0,#1,W10 ;65535 * 1 = 65535 = 0x0000FFFF = W11:10
+      mul.su W0,#1,W12 ;-1 * 1 = -1 = 0xFFFFFFFF = W13:W12
+
+
+done:                     ;do not return
+       bra done
+
+
+
+
+
+
+    .end
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="sat_add.s.html" title="sat_add.c - Demonstrate saturating addition"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mult_32x32_uns.s.html" title="mult_32x32_uns - Demonstrate unsigned 32 bit multiplication"
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,426 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>app_irqs.c - demostrates IRQ handling in ESOS &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="app_ds1631.c - I2C example using the DS1631" href="app_ds1631.c.html" />
+    <link rel="prev" title="app_childtask.c - demonstrates child tasks" href="app_childtask.c.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="app_ds1631.c.html" title="app_ds1631.c - I2C example using the DS1631"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="app_childtask.c.html" title="app_childtask.c - demonstrates child tasks"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="app-irqs-c-demostrates-irq-handling-in-esos">
+<h1>app_irqs.c - demostrates IRQ handling in ESOS<a class="headerlink" href="#app-irqs-c-demostrates-irq-handling-in-esos" title="Permalink to this headline">¶</a></h1>
+<p>ESOS application program to measure the pulse width of a button push
+using the 32-bit T2/T3 timer.  Recreates the program
+ref timer32bit_switch_pulse_measure.c with the same
+functionality (see Figures 12.4-12.5 in the text)
+.. note:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="n">Application</span> <span class="n">demonstrates</span> <span class="n">user</span> <span class="n">interrupts</span> <span class="n">under</span> <span class="n">ESOS</span>
+</pre></div>
+</div>
+<div class="highlight-c"><div class="highlight"><pre>
+
+
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>INCLUDEs go here  (First include the main esos.h file)</dt>
+<dd>After that, the user can include what they need</dd>
+</dl>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="cp">#include    &quot;esos.h&quot;</span>
+<span class="cp">#ifdef __linux</span>
+<span class="cp">#include    &quot;esos_pc.h&quot;</span>
+<span class="cp">#include    &quot;esos_pc_stdio.h&quot;</span>
+
+</pre></div>
+</div>
+<p>INCLUDE these so that printf() and our PC hacks work</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="cp">#include &lt;stdio.h&gt;</span>
+<span class="cp">#include &lt;sys/select.h&gt;</span>
+<span class="cp">#include &lt;termios.h&gt;</span>
+<span class="cp">#include &lt;unistd.h&gt;</span>
+<span class="cp">#else</span>
+<span class="cp">#include    &quot;esos_pic24.h&quot;</span>
+<span class="cp">#include    &quot;esos_pic24_rs232.h&quot;</span>
+<span class="cp">#include    &quot;pic24_timer.h&quot;</span>
+<span class="cp">#endif</span>
+
+</pre></div>
+</div>
+<p>DEFINEs go here</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="cp">#ifndef __linux</span>
+<span class="cp">#define   CONFIG_LED1()   CONFIG_RB15_AS_DIG_OUTPUT()</span>
+<span class="cp">#define   LED1            _LATB15</span>
+<span class="cp">#else</span>
+<span class="cp">#define   CONFIG_LED1()   printf(&quot;called CONFIG_LED1()\n&quot;);</span>
+<span class="kt">uint8_t</span>     <span class="n">LED1</span> <span class="o">=</span> <span class="n">TRUE</span><span class="p">;</span>      <span class="c1">// LED1 is initially &quot;on&quot;</span>
+<span class="cp">#endif</span>
+
+
+<span class="cp">#define WAITING_FOR_FALLING_EDGE        ESOS_USER_FLAG_0</span>
+<span class="cp">#define CAPTURED_FLAG                   ESOS_USER_FLAG_1</span>
+
+</pre></div>
+</div>
+<p>PROTOTYPEs go here</p>
+<div class="highlight-c"><div class="highlight"><pre>
+
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>GLOBALs go here</dt>
+<dd>Generally, the user-created semaphores will be defined/allocated here</dd>
+</dl>
+<div class="highlight-c"><div class="highlight"><pre>
+
+<span class="n">ESOS_SEMAPHORE</span><span class="p">(</span> <span class="n">sem_CapturedData</span> <span class="p">);</span>
+
+<span class="k">volatile</span> <span class="n">UINT32</span> <span class="n">U32_lastCapture</span><span class="p">;</span> <span class="c1">// UINT32 declared in all_generic.h</span>
+<span class="k">volatile</span> <span class="n">UINT32</span> <span class="n">U32_thisCapture</span><span class="p">;</span>
+<span class="k">volatile</span> <span class="kt">int32_t</span> <span class="n">u32_delta</span><span class="p">;</span>
+
+<span class="c1">/// Switch1 configuration, use RB13</span>
+<span class="kr">inline</span> <span class="kt">void</span> <span class="nf">CONFIG_SW1</span><span class="p">()</span>  <span class="p">{</span>
+  <span class="n">CONFIG_RB13_AS_DIG_INPUT</span><span class="p">();</span>   <span class="c1">//use RB13 for switch input</span>
+  <span class="n">ENABLE_RB13_PULLUP</span><span class="p">();</span>         <span class="c1">//enable the pullup</span>
+  <span class="n">CONFIG_INT1_TO_RP</span><span class="p">(</span><span class="mi">13</span><span class="p">);</span>        <span class="c1">//map INT1 to RP13</span>
+<span class="p">}</span>
+
+<span class="c1">//Timer2/3 used as single 32-bit timer, control word of Timer2 controls timer,</span>
+<span class="c1">//interrupt status of Timer3 used for the combined timer</span>
+<span class="kt">void</span>  <span class="nf">configTimer23</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">T2CON</span> <span class="o">=</span> <span class="n">T2_OFF</span> <span class="o">|</span> <span class="n">T2_IDLE_CON</span> <span class="o">|</span> <span class="n">T2_GATE_OFF</span>
+          <span class="o">|</span> <span class="n">T2_32BIT_MODE_ON</span>
+          <span class="o">|</span> <span class="n">T2_SOURCE_INT</span>
+          <span class="o">|</span> <span class="n">T2_PS_1_1</span> <span class="p">;</span>
+  <span class="n">PR2</span> <span class="o">=</span> <span class="mh">0xFFFF</span><span class="p">;</span>                    <span class="c1">//maximum period</span>
+  <span class="n">PR3</span> <span class="o">=</span> <span class="mh">0xFFFF</span><span class="p">;</span>                    <span class="c1">//maximum period</span>
+  <span class="n">TMR3HLD</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>                     <span class="c1">//write MSW first</span>
+  <span class="n">TMR2</span>  <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>                       <span class="c1">//then LSW</span>
+  <span class="n">ESOS_MARK_PIC24_USER_INTERRUPT_SERVICED</span><span class="p">(</span><span class="n">ESOS_IRQ_PIC24_T3</span><span class="p">);</span>
+  <span class="n">T2CONbits</span><span class="p">.</span><span class="n">TON</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>               <span class="c1">//turn on the timer</span>
+<span class="p">}</span>
+
+
+<span class="cm">/** Converts timer ticks to microseconds</span>
+<span class="cm"> *  \param u32_ticks  Timer ticks</span>
+<span class="cm"> *  \param u16_tmrPre Timer prescale value</span>
+<span class="cm"> *  \return time in microseconds</span>
+<span class="cm"> */</span>
+<span class="kt">uint32_t</span> <span class="nf">ticksToUs</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">u32_ticks</span><span class="p">,</span> <span class="kt">uint16_t</span> <span class="n">u16_tmrPre</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">((</span><span class="kt">uint32_t</span><span class="p">)</span> <span class="p">((((</span><span class="kt">uint64_t</span><span class="p">)</span> <span class="n">u32_ticks</span><span class="p">)</span> <span class="o">*</span> <span class="p">((</span><span class="kt">uint64_t</span><span class="p">)</span> <span class="n">u16_tmrPre</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="kt">uint64_t</span><span class="p">)</span> <span class="mi">1000000L</span><span class="p">)</span> <span class="o">/</span> <span class="p">((</span><span class="kt">uint64_t</span><span class="p">)</span> <span class="n">FCY</span><span class="p">)));</span>
+<span class="p">}</span>
+
+<span class="c1">//Interrupt Service Routine for INT1</span>
+<span class="c1">//void _ISRFAST _INT1Interrupt (void) {</span>
+<span class="n">ESOS_USER_INTERRUPT</span><span class="p">(</span> <span class="n">ESOS_IRQ_PIC24_INT1</span> <span class="p">)</span> <span class="p">{</span>
+  <span class="n">ESOS_MARK_PIC24_USER_INTERRUPT_SERVICED</span><span class="p">(</span><span class="n">ESOS_IRQ_PIC24_INT1</span><span class="p">);</span>    <span class="c1">//clear the interrupt bit</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">esos_IsUserFlagSet</span><span class="p">(</span><span class="n">WAITING_FOR_FALLING_EDGE</span><span class="p">))</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">esos_IsUserFlagClear</span><span class="p">(</span><span class="n">CAPTURED_FLAG</span><span class="p">))</span> <span class="p">{</span>
+      <span class="n">U32_lastCapture</span><span class="p">.</span><span class="n">u16LoWord</span> <span class="o">=</span> <span class="n">TMR2</span><span class="p">;</span>
+      <span class="n">U32_lastCapture</span><span class="p">.</span><span class="n">u16HiWord</span> <span class="o">=</span> <span class="n">TMR3HLD</span><span class="p">;</span>
+      <span class="n">_INT1EP</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>  <span class="c1">//configure for rising edge</span>
+      <span class="n">esos_ClearUserFlag</span><span class="p">(</span><span class="n">WAITING_FOR_FALLING_EDGE</span><span class="p">);</span>
+    <span class="p">}</span> <span class="c1">//endif CAPTURED_FLAG</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="n">U32_thisCapture</span><span class="p">.</span><span class="n">u16LoWord</span> <span class="o">=</span> <span class="n">TMR2</span><span class="p">;</span>
+    <span class="n">U32_thisCapture</span><span class="p">.</span><span class="n">u16HiWord</span> <span class="o">=</span> <span class="n">TMR3HLD</span><span class="p">;</span>
+    <span class="n">u32_delta</span> <span class="o">=</span> <span class="n">U32_thisCapture</span><span class="p">.</span><span class="n">u32</span> <span class="o">-</span> <span class="n">U32_lastCapture</span><span class="p">.</span><span class="n">u32</span><span class="p">;</span>
+    <span class="n">esos_SetUserFlag</span><span class="p">(</span><span class="n">CAPTURED_FLAG</span><span class="p">);</span>
+    <span class="n">_INT1EP</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>     <span class="c1">//configure for falling edge</span>
+    <span class="n">esos_SetUserFlag</span><span class="p">(</span><span class="n">WAITING_FOR_FALLING_EDGE</span><span class="p">);</span>
+  <span class="p">}</span> <span class="c1">//endif-else</span>
+<span class="p">}</span> <span class="c1">//end INT1 ISR</span>
+
+
+<span class="cm">/*</span>
+<span class="cm"> * An ESOS software timer callback function strobe the heartbeat LED.</span>
+<span class="cm"> *</span>
+<span class="cm"> * Toggles LED1 everytime the callback is called.  Exact period is</span>
+<span class="cm"> * determined by application when this timer callback function is</span>
+<span class="cm"> * registered with ESOS.  See \ref esos_RegisterTimer</span>
+<span class="cm"> * Application can change timer period on-the-fly with \ref esos_ChangeTimerPeriod</span>
+<span class="cm"> *</span>
+<span class="cm"> * \note Since this heartbeat is performed in an ESOS software</span>
+<span class="cm"> * timer callabck, a flashing LED indicates that the ESOS system</span>
+<span class="cm"> * tick ISR is being called properly.  If the LED quits flashing,</span>
+<span class="cm"> * then the ESOS system tick has ceased working.  This probably indicates</span>
+<span class="cm"> * some catastrophic failure of the system.  However, the cause could</span>
+<span class="cm"> * be poorly-behaved user code that is manipulating the hardware registers</span>
+<span class="cm"> * with the timer or interrupt enables directly.  ESOS provides functions</span>
+<span class="cm"> * to change state of interrupts and user code should never modify the</span>
+<span class="cm"> * hardware used by ESOS to implement the system tick.</span>
+<span class="cm"> * \hideinitializer</span>
+<span class="cm"> */</span>
+
+</pre></div>
+</div>
+<p>user-created timer callback</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="n">ESOS_USER_TIMER</span><span class="p">(</span> <span class="n">swTimerLED</span> <span class="p">)</span> <span class="p">{</span>
+  <span class="n">LED1</span> <span class="o">=</span> <span class="o">!</span><span class="n">LED1</span><span class="p">;</span>
+<span class="cp">#ifdef __linux</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">LED1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\a</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="n">fflush</span><span class="p">(</span><span class="n">stdout</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="cp">#endif</span>
+<span class="p">}</span> <span class="c1">//endof swTimerLED</span>
+
+<span class="cm">/* == task1 ==</span>
+<span class="cm"> * Print out a counter value local to this task, then delay</span>
+<span class="cm"> * for a random period of time.  (Delays range from approx.</span>
+<span class="cm"> * 0.25 - 4.1 seconds)</span>
+<span class="cm"> */</span>
+<span class="n">ESOS_USER_TASK</span><span class="p">(</span><span class="n">task1</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">static</span>  <span class="kt">uint32_t</span>          <span class="n">u32_pulseWidth</span><span class="p">;</span>
+
+  <span class="n">ESOS_TASK_BEGIN</span><span class="p">();</span>
+  <span class="k">while</span> <span class="p">(</span><span class="n">TRUE</span><span class="p">)</span> <span class="p">{</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Print prompt</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+    <span class="n">ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM</span><span class="p">();</span>
+    <span class="n">ESOS_TASK_WAIT_ON_SEND_STRING</span><span class="p">(</span><span class="s">&quot;Press button...</span><span class="se">\r\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="n">ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM</span><span class="p">();</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Wait on capture flag</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+    <span class="n">ESOS_TASK_WAIT_UNTIL</span><span class="p">(</span><span class="n">esos_IsUserFlagSet</span><span class="p">(</span><span class="n">CAPTURED_FLAG</span><span class="p">));</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Convert processor ticks to microseconds</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+    <span class="n">u32_pulseWidth</span> <span class="o">=</span> <span class="n">ticksToUs</span><span class="p">(</span><span class="n">u32_delta</span><span class="p">,</span> <span class="n">getTimerPrescale</span><span class="p">(</span><span class="n">T2CONbits</span><span class="p">));</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Clear capture flag</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+    <span class="n">esos_ClearUserFlag</span><span class="p">(</span><span class="n">CAPTURED_FLAG</span><span class="p">);</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Print delta times</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+    <span class="n">ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM</span><span class="p">();</span>
+
+    <span class="n">ESOS_TASK_WAIT_ON_SEND_STRING</span><span class="p">(</span><span class="s">&quot;Ticks =</span><span class="se">\t\t</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="n">ESOS_TASK_WAIT_ON_SEND_UINT32_AS_HEX_STRING</span><span class="p">(</span><span class="n">u32_delta</span><span class="p">);</span>
+    <span class="n">ESOS_TASK_WAIT_ON_SEND_STRING</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\r\n</span><span class="s">&quot;</span><span class="p">);</span>
+
+    <span class="n">ESOS_TASK_WAIT_ON_SEND_STRING</span><span class="p">(</span><span class="s">&quot;Pulse width =</span><span class="se">\t</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="n">ESOS_TASK_WAIT_ON_SEND_UINT32_AS_HEX_STRING</span><span class="p">(</span><span class="n">u32_pulseWidth</span><span class="p">);</span>
+    <span class="n">ESOS_TASK_WAIT_ON_SEND_STRING</span><span class="p">(</span><span class="s">&quot; us</span><span class="se">\r\n\r\n</span><span class="s">&quot;</span><span class="p">);</span>
+
+
+
+
+    <span class="n">ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM</span><span class="p">();</span>
+  <span class="p">}</span> <span class="c1">// endof while</span>
+  <span class="n">ESOS_TASK_END</span><span class="p">();</span>
+<span class="p">}</span> <span class="c1">// end task1()</span>
+
+<span class="cm">/****************************************************</span>
+<span class="cm"> *  user_init()</span>
+<span class="cm"> ****************************************************</span>
+<span class="cm"> */</span>
+<span class="kt">void</span> <span class="n">user_init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><p>Call the hardware-provided routines to print the
+HELLO_MSG to the screen.  Must use this call because
+the ESOS communications subsystems is not yet fully
+initialized, since this call is in user_init()</p>
+<p>In general, users should call hardware-specific
+function like this.</p>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">__esos_unsafe_PutString</span><span class="p">(</span> <span class="n">HELLO_MSG</span> <span class="p">);</span>
+
+<span class="cp">#ifdef __linux</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>register our little ESOS task to mimic MCU&#8217;s TIMER T1 IRQ which kicks off
+the ESOS S/W timers when they expire</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">esos_RegisterTask</span><span class="p">(</span> <span class="n">__simulated_isr</span> <span class="p">);</span>
+<span class="cp">#endif</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>configure our hardware to support to support our application</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">CONFIG_LED1</span><span class="p">();</span>
+  <span class="n">CONFIG_SW1</span><span class="p">();</span>
+  <span class="n">configTimer23</span><span class="p">();</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>initialize the semaphore (initially blocking)</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="c1">//ESOS_INIT_SEMAPHORE( sem_T1CanRun, 0 );</span>
+  <span class="c1">//ESOS_INIT_SEMAPHORE( sem_T2CanRun, 0 );</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>user_init() should register at least one user task</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">esos_RegisterTask</span><span class="p">(</span><span class="n">task1</span><span class="p">);</span>
+  <span class="c1">//esos_RegisterTask(task2);</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>register our callback function with ESOS to create a software timer</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">esos_RegisterTimer</span><span class="p">(</span> <span class="n">swTimerLED</span><span class="p">,</span> <span class="mi">250</span> <span class="p">);</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Configure INT1</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">esos_SetUserFlag</span><span class="p">(</span><span class="n">WAITING_FOR_FALLING_EDGE</span><span class="p">);</span>
+  <span class="n">_INT1EP</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>     <span class="c1">//negative edge triggerred</span>
+  <span class="n">ESOS_REGISTER_PIC24_USER_INTERRUPT</span><span class="p">(</span> <span class="n">ESOS_IRQ_PIC24_INT1</span><span class="p">,</span> <span class="n">ESOS_USER_IRQ_LEVEL1</span><span class="p">,</span> <span class="n">_INT1Interrupt</span><span class="p">);</span>
+  <span class="n">ESOS_ENABLE_PIC24_USER_INTERRUPT</span><span class="p">(</span><span class="n">ESOS_IRQ_PIC24_INT1</span><span class="p">);</span>
+
+<span class="p">}</span> <span class="c1">// end user_init()</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="app_ds1631.c.html" title="app_ds1631.c - I2C example using the DS1631"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="app_childtask.c.html" title="app_childtask.c - demonstrates child tasks"
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,23 @@
+var searchData=
+[
+  ['enable_5fuart1',['ENABLE_UART1',['../esos__pic24__rs232_8h.html#ac0586c74958c9a62f5fccd9ca2ecfb47',1,'esos_pic24_rs232.h']]],
+  ['esos_5fbuffer_5fhash_5fu32',['esos_buffer_hash_u32',['../esos_8h.html#ae9a11d68c57384fccb166e2047bea558',1,'esos_buffer_hash_u32(void *buf, uint16_t len):&#160;esos.c'],['../esos_8c.html#ae9a11d68c57384fccb166e2047bea558',1,'esos_buffer_hash_u32(void *buf, uint16_t len):&#160;esos.c']]],
+  ['esos_5fchangetimerperiod',['esos_ChangeTimerPeriod',['../esos_8h.html#aa3bca02f80e920ce601b6984553b3aed',1,'esos_ChangeTimerPeriod(ESOS_TMR_HANDLE hnd_timer, uint32_t u32_period):&#160;esos.c'],['../esos_8c.html#aa3bca02f80e920ce601b6984553b3aed',1,'esos_ChangeTimerPeriod(ESOS_TMR_HANDLE hnd_timer, uint32_t u32_period):&#160;esos.c']]],
+  ['esos_5fchild_5ftask',['ESOS_CHILD_TASK',['../group___e_s_o_s___i2_c___service.html#gadddcff8ba186cd2f806fd55bca5d13e3',1,'ESOS_CHILD_TASK(__esos_pic24_writeNI2C1, uint8_t u8_addr, uint8_t *pu8_d, uint16_t u16_cnt):&#160;esos_pic24_i2c.c'],['../group___e_s_o_s___i2_c___service.html#ga42cf497efb872a76943aeba064a150dc',1,'ESOS_CHILD_TASK(__esos_pic24_readNI2C1, uint8_t u8_addr, uint8_t *pu8_d, uint16_t u16_cnt):&#160;esos_pic24_i2c.c']]],
+  ['esos_5fgetcommsystemmaxindatalen',['esos_GetCommSystemMaxInDataLen',['../group___e_s_o_s___u_a_r_t___service.html#gaf23beecfc68da9cc095635fb8057faa7',1,'esos_pic24_rs232.c']]],
+  ['esos_5fgetcommsystemmaxoutdatalen',['esos_GetCommSystemMaxOutDataLen',['../group___e_s_o_s___u_a_r_t___service.html#ga6dcd9b5654fd0c8031e48fc60f69acd8',1,'esos_pic24_rs232.c']]],
+  ['esos_5fgetcommsystemversion',['esos_GetCommSystemVersion',['../group___e_s_o_s___u_a_r_t___service.html#gaac7cc9f274388f3fdf235847d09c575b',1,'esos_comm.h']]],
+  ['esos_5fgetfreechildtaskstruct',['esos_GetFreeChildTaskStruct',['../esos_8h.html#addb1c02b1dae255a5788e668079c1caf',1,'esos_GetFreeChildTaskStruct():&#160;esos.c'],['../esos_8c.html#addb1c02b1dae255a5788e668079c1caf',1,'esos_GetFreeChildTaskStruct():&#160;esos.c']]],
+  ['esos_5fgetmaxnumbertasks',['esos_GetMaxNumberTasks',['../esos_8c.html#a1d41ad0b60685a0226268578ce37d661',1,'esos.c']]],
+  ['esos_5fgetrandomuint32',['esos_GetRandomUint32',['../esos_8h.html#a4eb2a1d5b9dff9ddbce7852af54165c8',1,'esos_GetRandomUint32():&#160;esos.c'],['../esos_8c.html#a8d43b93d87735b086a4bdd29dc19a383',1,'esos_GetRandomUint32(void):&#160;esos.c']]],
+  ['esos_5fgettaskhandle',['esos_GetTaskHandle',['../esos_8h.html#ae214392193e05cb7937449efba3719e9',1,'esos_GetTaskHandle(uint8_t(*taskname)(ESOS_TASK_HANDLE pstTask)):&#160;esos.c'],['../esos_8c.html#ae214392193e05cb7937449efba3719e9',1,'esos_GetTaskHandle(uint8_t(*taskname)(ESOS_TASK_HANDLE pstTask)):&#160;esos.c']]],
+  ['esos_5fgettaskhandlefromid',['esos_GetTaskHandleFromID',['../esos_8h.html#afd539d191a854f3d5932cd29fec33db3',1,'esos_GetTaskHandleFromID(uint16_t u16_TaskID):&#160;esos.c'],['../esos_8c.html#afd539d191a854f3d5932cd29fec33db3',1,'esos_GetTaskHandleFromID(uint16_t u16_TaskID):&#160;esos.c']]],
+  ['esos_5fgettimerhandle',['esos_GetTimerHandle',['../esos_8h.html#af1c7d1120c29064e6000f618fbd7a5e5',1,'esos_GetTimerHandle(void(*pfnTmrFcn)(void)):&#160;esos.c'],['../esos_8c.html#af1c7d1120c29064e6000f618fbd7a5e5',1,'esos_GetTimerHandle(void(*pfnTmrFcn)(void)):&#160;esos.c']]],
+  ['esos_5fpic24_5fconfigi2c1',['esos_pic24_configI2C1',['../group___e_s_o_s___i2_c___service.html#ga82923bcd432dce55525c46d80623ec41',1,'esos_pic24_i2c.c']]],
+  ['esos_5fregistertask',['esos_RegisterTask',['../esos_8c.html#a6e9a001abe585d0cae1681e574c928b1',1,'esos.c']]],
+  ['esos_5fregistertimer',['esos_RegisterTimer',['../esos_8h.html#ab3d5025777ec8a138a05e11f922d2ee0',1,'esos_RegisterTimer(void(*pfnTmrFcn)(void), uint32_t u32_period):&#160;esos.c'],['../esos_8c.html#a74be6b00ec0e0a4e82a34bbb95bb9841',1,'esos_RegisterTimer(void(*timername)(void), uint32_t u32_period):&#160;esos.c']]],
+  ['esos_5fsetrandomuint32seed',['esos_SetRandomUint32Seed',['../esos_8c.html#ae8209662a546fc4b5a2624b0cdaaf6e3',1,'esos.c']]],
+  ['esos_5fstring_5fhash_5fu32',['esos_string_hash_u32',['../esos_8h.html#a700108a6174f0d26f8fc61e753a943b0',1,'esos_string_hash_u32(char *psz_str):&#160;esos.c'],['../esos_8c.html#a700108a6174f0d26f8fc61e753a943b0',1,'esos_string_hash_u32(char *psz_str):&#160;esos.c']]],
+  ['esos_5funregistertask',['esos_UnregisterTask',['../esos_8c.html#a759ae0a8dd16cea8b5510aafce1261e1',1,'esos.c']]],
+  ['esos_5funregistertimer',['esos_UnregisterTimer',['../esos_8h.html#a464d82207b87a8fad79a7b34b622ca7b',1,'esos_UnregisterTimer(ESOS_TMR_HANDLE hnd_timer):&#160;esos.c'],['../esos_8c.html#a464d82207b87a8fad79a7b34b622ca7b',1,'esos_UnregisterTimer(ESOS_TMR_HANDLE hnd_timer):&#160;esos.c']]]
+];

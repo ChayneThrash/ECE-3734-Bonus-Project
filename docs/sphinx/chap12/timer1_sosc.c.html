@@ -1,0 +1,132 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>time1_sosc.c - Demonstrates use of Timer1 with a secondary oscillator. &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="comparator_example.c - Illustrates a simple use of the comparator module" href="../chap13/comparator_example.c.html" />
+    <link rel="prev" title="pwm_dac.c - Demonstrates a PWM DAC" href="pwm_dac.c.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../chap13/comparator_example.c.html" title="comparator_example.c - Illustrates a simple use of the comparator module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="pwm_dac.c.html" title="pwm_dac.c - Demonstrates a PWM DAC"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="time1-sosc-c-demonstrates-use-of-timer1-with-a-secondary-oscillator">
+<h1>time1_sosc.c - Demonstrates use of Timer1 with a secondary oscillator.<a class="headerlink" href="#time1-sosc-c-demonstrates-use-of-timer1-with-a-secondary-oscillator" title="Permalink to this headline">¶</a></h1>
+<p>Only works a device with a secondary oscillator (many PIC24H/F, dsPIC33F devices, few PIC24E/dsPIC33E).</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="cp">#include &lt;stdio.h&gt;</span>
+<span class="cp">#include &lt;pic24_all.h&gt;</span>
+
+<span class="cp">#ifndef _LPOSCEN</span>
+<span class="cp"># warning &quot;This example only works with a device that has a secondary oscillator.&quot;</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="cp">#else</span>
+
+
+<span class="k">volatile</span> <span class="kt">uint16_t</span> <span class="n">u16_seconds</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+<span class="kt">void</span> <span class="n">_ISRFAST</span> <span class="nf">_T1Interrupt</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">u16_seconds</span><span class="o">++</span><span class="p">;</span>
+  <span class="n">_T1IF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>  <span class="c1">//clear interrupt flag</span>
+<span class="p">}</span>
+
+<span class="kt">void</span>  <span class="nf">configTimer1</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">T1CON</span> <span class="o">=</span> <span class="n">T1_OFF</span> <span class="o">|</span> <span class="n">T1_IDLE_CON</span> <span class="o">|</span> <span class="n">T1_GATE_OFF</span>
+          <span class="o">|</span> <span class="n">T1_SYNC_EXT_OFF</span>
+          <span class="o">|</span> <span class="n">T1_SOURCE_EXT</span> <span class="c1">//ext clock</span>
+          <span class="o">|</span> <span class="n">T1_PS_1_1</span> <span class="p">;</span>  <span class="c1">// prescaler of 1</span>
+  <span class="n">PR1</span> <span class="o">=</span> <span class="mh">0x7FFF</span><span class="p">;</span>          <span class="c1">//period is 1 second</span>
+  <span class="n">_T1IF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>             <span class="c1">//clear interrupt flag</span>
+  <span class="n">_T1IP</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>             <span class="c1">//choose a priority</span>
+  <span class="n">_T1IE</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>             <span class="c1">//enable the interrupt</span>
+  <span class="n">T1CONbits</span><span class="p">.</span><span class="n">TON</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>     <span class="c1">//turn on the timer</span>
+<span class="p">}</span>
+
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">__builtin_write_OSCCONL</span><span class="p">(</span><span class="n">OSCCON</span> <span class="o">|</span> <span class="mh">0x02</span><span class="p">);</span>    <span class="c1">//OSCCON.LPOSCEN=1;</span>
+  <span class="n">configBasic</span><span class="p">(</span><span class="n">HELLO_MSG</span><span class="p">);</span>   <span class="c1">//say Hello!</span>
+  <span class="n">configTimer1</span><span class="p">();</span>
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">outString</span><span class="p">(</span><span class="s">&quot;Seconds: &quot;</span><span class="p">);</span>
+    <span class="n">outUint16Decimal</span><span class="p">(</span><span class="n">u16_seconds</span><span class="p">);</span>
+    <span class="n">outString</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="k">while</span><span class="p">(</span><span class="o">!</span><span class="n">IS_TRANSMIT_COMPLETE_UART1</span><span class="p">());</span>
+    <span class="n">SLEEP</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">#endif</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../chap13/comparator_example.c.html" title="comparator_example.c - Illustrates a simple use of the comparator module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="pwm_dac.c.html" title="pwm_dac.c - Demonstrates a PWM DAC"
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

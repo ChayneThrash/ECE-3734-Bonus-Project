@@ -1,0 +1,155 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>countOnes_assem.s - Counts the number of 1 bits in a word &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="fib.c - A recursive subroutine example to compute a Fibonnachi number" href="fib.c.html" />
+    <link rel="prev" title="countOnes.c - Counts the number of 1 bits in u16_v" href="countOnes.c.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="fib.c.html" title="fib.c - A recursive subroutine example to compute a Fibonnachi number"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="countOnes.c.html" title="countOnes.c - Counts the number of 1 bits in u16_v"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="countones-assem-s-counts-the-number-of-1-bits-in-a-word">
+<h1>countOnes_assem.s - Counts the number of 1 bits in a word<a class="headerlink" href="#countones-assem-s-counts-the-number-of-1-bits-in-a-word" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-nasm"><div class="highlight"><pre>
+
+.include &quot;xc.inc&quot;
+
+.global __reset          ;The label for the first line of code.
+
+
+         .data            ;unitialized data section
+
+         .bss
+;;These start at location 0x0800 because 0-0x07FF reserved for SFRs
+u16_k:   .space 2        ;Allocating space (in bytes) to variable.
+u8_j:    .space 1        ;Allocating space (in bytes) to variable.
+
+.text                          ;Start of Code section
+__reset:                       ; first instruction located at __reset label
+       mov #__SP_init, w15     ;Initalize the Stack Pointer
+       mov #__SPLIM_init,W0
+       mov W0, SPLIM           ;Initialize the stack limit register
+       rcall main              ;call main()
+       reset                   ;start over
+ ;__SP_init set by linker to be after allocated data
+
+main:
+</pre></div>
+</div>
+<p>u16_k = 0xA501;</p>
+<div class="highlight-nasm"><div class="highlight"><pre>
+       mov #0xA501, W0
+       mov WREG, u16_k     ;init u16_k
+
+</pre></div>
+</div>
+<p>u8_j = countOnes(u16_k);</p>
+<div class="highlight-nasm"><div class="highlight"><pre>
+       <span class="nf">mov</span> <span class="nv">u16_k</span><span class="p">,</span> <span class="nv">WREG</span>     <span class="c1">;W0 used to for u16_v parameter</span>
+       <span class="nf">rcall</span> <span class="nv">countOnes</span>
+       <span class="nf">mov.b</span> <span class="nv">WREG</span><span class="p">,</span> <span class="nv">u8_j</span>
+<span class="nl">done:</span>                     <span class="c1">;do not return</span>
+       <span class="nf">bra</span> <span class="nv">done</span>
+
+
+
+
+</pre></div>
+</div>
+<p>u16_v passed in W0
+return value passed back in W0
+W1 used for local u8_cnt, W2 for u8_i</p>
+<div class="highlight-nasm"><div class="highlight"><pre>
+countOnes:
+    clr.b W1          ;u8_cnt=0
+    clr.b W2          ;u8_i=0
+loop_top:
+    cp.b W2,#16       ;compare u8_i, 16
+    bra GEU,end_loop  ;exit loop if u8_i&gt;=16
+    btst.z W0,#0      ;test LSbit for zero
+    bra Z, end_if
+    inc.b W1,W1       ;u8_cnt++;
+end_if:
+    lsr W0,#1,W0      ;u16_v = u16_v &gt;&gt; 1;
+    inc.b W2,W2       ;u8_i++
+    bra loop_top
+end_loop:
+    mov.b W1,W0       ;W0 = u8_cnt for
+    return            ;  return value
+
+
+    .end
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="fib.c.html" title="fib.c - A recursive subroutine example to compute a Fibonnachi number"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="countOnes.c.html" title="countOnes.c - Counts the number of 1 bits in u16_v"
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

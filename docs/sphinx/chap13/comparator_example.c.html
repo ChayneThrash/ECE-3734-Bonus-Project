@@ -1,0 +1,129 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>comparator_example.c - Illustrates a simple use of the comparator module &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="dma_example.c - Uses DMA in ping-pong mode to capture data from the UART, write it to the 24LC515 EEPROM" href="dma_example.c.html" />
+    <link rel="prev" title="time1_sosc.c - Demonstrates use of Timer1 with a secondary oscillator." href="../chap12/timer1_sosc.c.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="dma_example.c.html" title="dma_example.c - Uses DMA in ping-pong mode to capture data from the UART, write it to the 24LC515 EEPROM"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../chap12/timer1_sosc.c.html" title="time1_sosc.c - Demonstrates use of Timer1 with a secondary oscillator."
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="comparator-example-c-illustrates-a-simple-use-of-the-comparator-module">
+<h1>comparator_example.c - Illustrates a simple use of the comparator module<a class="headerlink" href="#comparator-example-c-illustrates-a-simple-use-of-the-comparator-module" title="Permalink to this headline">¶</a></h1>
+<p>Illustrates a simple usage of the comparator module</p>
+<div class="highlight-c"><div class="highlight"><pre>
+
+<span class="cp">#include &quot;pic24_all.h&quot;</span>
+<span class="cp">#include &lt;stdio.h&gt;</span>
+
+<span class="cp">#if defined(__dsPIC33E__) || defined(__PIC24E__)</span>
+<span class="cp"># warning &quot;This example does not work with the dsPIC33E/PIC24E families.&quot;</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="cp">#else</span>
+
+<span class="kt">void</span> <span class="nf">configComparator</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">CMCON</span> <span class="o">=</span> <span class="n">CMP_IDLE_STOP</span> <span class="o">|</span> <span class="n">CMP1_ENABLE</span> <span class="o">|</span> <span class="n">CMP2_DISABLE</span> <span class="o">|</span>
+          <span class="n">CMP1_OUTPUT_DISABLE</span> <span class="o">|</span> <span class="n">CMP1_NORMAL_OUTPUT</span> <span class="o">|</span>
+          <span class="n">CMP1_NEG_IP_VIN_POS</span> <span class="o">|</span> <span class="n">CMP1_POS_IP_CV_REF</span><span class="p">;</span>
+  <span class="n">CVRCON</span> <span class="o">=</span> <span class="n">CMP_VREF_ENABLE</span> <span class="o">|</span>
+           <span class="n">CMP_VREF_OUTPUT_DISABLE</span> <span class="o">|</span>
+           <span class="n">CMP_VRSRC_AVDD_AVSS</span> <span class="o">|</span>
+           <span class="n">CMP_0P50_CVRR_1</span> <span class="p">;</span>
+  <span class="n">DELAY_US</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="c1">//wait for comparator to settle</span>
+  <span class="n">_C1EVT</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">//clear C1 event flag</span>
+  <span class="n">_CMIF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>  <span class="c1">//clear interrupt flag</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">uint8_t</span> <span class="n">u8_i</span><span class="p">;</span>
+  <span class="n">configBasic</span><span class="p">(</span><span class="n">HELLO_MSG</span><span class="p">);</span>
+  <span class="n">configComparator</span><span class="p">();</span>
+  <span class="n">u8_i</span> <span class="o">=</span> <span class="n">_C1OUT</span><span class="p">;</span>  <span class="c1">//intial read to set trigger</span>
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">do</span> <span class="p">{</span>
+      <span class="n">doHeartbeat</span><span class="p">();</span> <span class="c1">//wait for trigger</span>
+    <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">_CMIF</span><span class="p">);</span>
+    <span class="n">_CMIF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">u8_i</span> <span class="o">=</span> <span class="n">_C1OUT</span><span class="p">;</span>  <span class="c1">//current value</span>
+    <span class="n">outString</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s"> Comparator fired: &quot;</span><span class="p">);</span>
+    <span class="n">outUint8</span><span class="p">(</span><span class="n">u8_i</span><span class="p">);</span>
+    <span class="n">DELAY_MS</span><span class="p">(</span><span class="mi">100</span><span class="p">);</span>
+  <span class="p">}</span> <span class="c1">//end while</span>
+<span class="p">}</span><span class="c1">//end main</span>
+<span class="cp">#endif</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="dma_example.c.html" title="dma_example.c - Uses DMA in ping-pong mode to capture data from the UART, write it to the 24LC515 EEPROM"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../chap12/timer1_sosc.c.html" title="time1_sosc.c - Demonstrates use of Timer1 with a secondary oscillator."
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

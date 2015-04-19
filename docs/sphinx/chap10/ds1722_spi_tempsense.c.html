@@ -1,0 +1,159 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>ds1722_spi_tempsense.c - SPI example: PIC24 uC in Master mode to Maxim DS1722 Digital Thermometer &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="spi_master_revstring.c - SPI master uses slave to reverse strings" href="spi_master_revstring.c.html" />
+    <link rel="prev" title="mcp41xxx_spi_pot.c - SPI example: PIC24 uC in Master mode to Microchip MCP41xxx Digital Potentiometer" href="mcp41xxx_spi_pot.c.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="spi_master_revstring.c.html" title="spi_master_revstring.c - SPI master uses slave to reverse strings"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mcp41xxx_spi_pot.c.html" title="mcp41xxx_spi_pot.c - SPI example: PIC24 uC in Master mode to Microchip MCP41xxx Digital Potentiometer"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="ds1722-spi-tempsense-c-spi-example-pic24-uc-in-master-mode-to-maxim-ds1722-digital-thermometer">
+<h1>ds1722_spi_tempsense.c - SPI example: PIC24 uC in Master mode to Maxim DS1722 Digital Thermometer<a class="headerlink" href="#ds1722-spi-tempsense-c-spi-example-pic24-uc-in-master-mode-to-maxim-ds1722-digital-thermometer" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c"><div class="highlight"><pre>
+
+<span class="cp">#include &quot;pic24_all.h&quot;</span>
+<span class="cp">#include &lt;stdio.h&gt;</span>
+
+<span class="cp">#define CONFIG_SLAVE_ENABLE() CONFIG_RB3_AS_DIG_OUTPUT()</span>
+<span class="cp">#define SLAVE_ENABLE()        _LATB3 = 1  </span><span class="c1">//high true assertion</span>
+<span class="cp">#define SLAVE_DISABLE()       _LATB3 = 0</span>
+
+<span class="kt">void</span> <span class="nf">configSPI1</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">SPI1CON1</span> <span class="o">=</span>
+<span class="cp">#if (defined(__dsPIC33E__) || defined(__PIC24E__))</span>
+    <span class="c1">//spi clock = 60MHz/1*6 = 60MHz/4 = 10MHz</span>
+    <span class="n">PRI_PRESCAL_1_1</span> <span class="o">|</span>     <span class="c1">//1:1 primary prescale</span>
+    <span class="n">SEC_PRESCAL_6_1</span> <span class="o">|</span>     <span class="c1">//6:1 secondary prescale</span>
+<span class="cp">#else</span>
+    <span class="c1">//spi clock = 40MHz/4*1 = 40MHz/4 = 10MHz</span>
+    <span class="n">PRI_PRESCAL_4_1</span> <span class="o">|</span>     <span class="c1">//4:1 primary prescale</span>
+    <span class="n">SEC_PRESCAL_1_1</span> <span class="o">|</span>     <span class="c1">//1:1 secondary prescale</span>
+<span class="cp">#endif</span>
+    <span class="n">CLK_POL_ACTIVE_HIGH</span>   <span class="o">|</span> <span class="c1">//clock active high (CKP = 0)</span>
+    <span class="n">SPI_CKE_OFF</span>          <span class="o">|</span> <span class="c1">//out changes inactive to active (CKE=0)</span>
+    <span class="n">SPI_MODE8_ON</span>        <span class="o">|</span> <span class="c1">//8-bit mode</span>
+    <span class="n">MASTER_ENABLE_ON</span><span class="p">;</span>     <span class="c1">//master mode</span>
+<span class="cp">#if (defined(__dsPIC33E__) || defined(__PIC24E__))</span>
+  <span class="c1">//nothing to do here. On this family, the SPI1 port uses dedicated</span>
+  <span class="c1">//pins for higher speed. The SPI2 port can be used with remappable pins.</span>
+<span class="cp">#else</span>
+<span class="c1">//all other families (PIC24H/PIC24F/dsPIC33F)</span>
+  <span class="n">CONFIG_SDO1_TO_RP</span><span class="p">(</span><span class="n">RB6_RP</span><span class="p">);</span>      <span class="c1">//use RB6 for SDO</span>
+  <span class="n">CONFIG_RB6_AS_DIG_OUTPUT</span><span class="p">();</span>   <span class="c1">//Ensure that this is a digital output</span>
+  <span class="n">CONFIG_SCK1OUT_TO_RP</span><span class="p">(</span><span class="n">RB7_RP</span><span class="p">);</span>   <span class="c1">//use RB7 for SCLK</span>
+  <span class="n">CONFIG_RB7_AS_DIG_INPUT</span><span class="p">();</span>   <span class="c1">//Ensure that this is a digital input</span>
+  <span class="n">CONFIG_SDI1_TO_RP</span><span class="p">(</span><span class="n">RB5_RP</span><span class="p">);</span>      <span class="c1">//use RP5 for SDI</span>
+  <span class="n">CONFIG_RB5_AS_DIG_INPUT</span><span class="p">();</span>   <span class="c1">//Ensure that this is a digital input</span>
+<span class="cp">#endif</span>
+  <span class="n">CONFIG_SLAVE_ENABLE</span><span class="p">();</span>       <span class="c1">//chip select for MCP41xxx</span>
+  <span class="n">SLAVE_DISABLE</span><span class="p">();</span>             <span class="c1">//disable the chip select</span>
+  <span class="n">SPI1STATbits</span><span class="p">.</span><span class="n">SPIEN</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>  <span class="c1">//enable SPI mode</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">writeConfigDS1722</span><span class="p">(</span><span class="kt">uint8_t</span> <span class="n">u8_i</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">SLAVE_ENABLE</span><span class="p">();</span>       <span class="c1">//assert chipselect</span>
+  <span class="n">ioMasterSPI1</span><span class="p">(</span><span class="mh">0x80</span><span class="p">);</span>   <span class="c1">//config address</span>
+  <span class="n">ioMasterSPI1</span><span class="p">(</span><span class="n">u8_i</span><span class="p">);</span>   <span class="c1">//config value</span>
+  <span class="n">SLAVE_DISABLE</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kt">int16_t</span> <span class="nf">readTempDS1722</span><span class="p">()</span> <span class="p">{</span>
+  <span class="kt">uint16_t</span> <span class="n">u16_lo</span><span class="p">,</span> <span class="n">u16_hi</span><span class="p">;</span>
+  <span class="n">SLAVE_ENABLE</span><span class="p">();</span>       <span class="c1">//assert chipselect</span>
+  <span class="n">ioMasterSPI1</span><span class="p">(</span><span class="mh">0x01</span><span class="p">);</span>   <span class="c1">//LSB address</span>
+  <span class="n">u16_lo</span> <span class="o">=</span> <span class="n">ioMasterSPI1</span><span class="p">(</span><span class="mh">0x00</span><span class="p">);</span> <span class="c1">//read LSByte</span>
+  <span class="n">u16_hi</span> <span class="o">=</span> <span class="n">ioMasterSPI1</span><span class="p">(</span><span class="mh">0x00</span><span class="p">);</span> <span class="c1">//read MSByte</span>
+  <span class="n">SLAVE_DISABLE</span><span class="p">();</span>
+  <span class="k">return</span><span class="p">((</span><span class="n">u16_hi</span><span class="o">&lt;&lt;</span><span class="mi">8</span><span class="p">)</span> <span class="o">|</span> <span class="n">u16_lo</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">int16_t</span> <span class="n">i16_temp</span><span class="p">;</span>
+  <span class="kt">float</span>  <span class="n">f_tempC</span><span class="p">,</span><span class="n">f_tempF</span><span class="p">;</span>
+  <span class="n">configBasic</span><span class="p">(</span><span class="n">HELLO_MSG</span><span class="p">);</span>
+  <span class="n">configSPI1</span><span class="p">();</span>
+  <span class="n">writeConfigDS1722</span><span class="p">(</span><span class="mh">0xE8</span><span class="p">);</span> <span class="c1">//10-bit mode</span>
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">DELAY_MS</span><span class="p">(</span><span class="mi">1500</span><span class="p">);</span>
+    <span class="n">i16_temp</span> <span class="o">=</span> <span class="n">readTempDS1722</span><span class="p">();</span>
+    <span class="n">f_tempC</span> <span class="o">=</span> <span class="n">i16_temp</span><span class="p">;</span>  <span class="c1">//convert to floating point</span>
+    <span class="n">f_tempC</span> <span class="o">=</span> <span class="n">f_tempC</span><span class="o">/</span><span class="mi">256</span><span class="p">;</span>  <span class="c1">//divide by precision</span>
+    <span class="n">f_tempF</span> <span class="o">=</span> <span class="n">f_tempC</span><span class="o">*</span><span class="mi">9</span><span class="o">/</span><span class="mi">5</span> <span class="o">+</span> <span class="mi">32</span><span class="p">;</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Temp is: 0x%0X, %4.4f (C), %4.4f (F)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">i16_temp</span><span class="p">,</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span> <span class="n">f_tempC</span><span class="p">,</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span> <span class="n">f_tempF</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="spi_master_revstring.c.html" title="spi_master_revstring.c - SPI master uses slave to reverse strings"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mcp41xxx_spi_pot.c.html" title="mcp41xxx_spi_pot.c - SPI example: PIC24 uC in Master mode to Microchip MCP41xxx Digital Potentiometer"
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

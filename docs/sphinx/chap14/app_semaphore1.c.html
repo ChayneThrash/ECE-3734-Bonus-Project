@@ -1,0 +1,342 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>app_semaphore1.c - demonstrates use of semaphores for signaling synchronization &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="app_semaphore2.c - demonstrates rendezvous synchronization with semaphores" href="app_semaphore2.c.html" />
+    <link rel="prev" title="app_timerLEDecho.c - flash an LED using a software timer" href="app_timerLEDecho.c.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="app_semaphore2.c.html" title="app_semaphore2.c - demonstrates rendezvous synchronization with semaphores"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="app_timerLEDecho.c.html" title="app_timerLEDecho.c - flash an LED using a software timer"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="app-semaphore1-c-demonstrates-use-of-semaphores-for-signaling-synchronization">
+<h1>app_semaphore1.c - demonstrates use of semaphores for signaling synchronization<a class="headerlink" href="#app-semaphore1-c-demonstrates-use-of-semaphores-for-signaling-synchronization" title="Permalink to this headline">¶</a></h1>
+<p>ESOS application program to where two tasks increment a counter local to
+each task.  Tasks run forever.  However, task1 will delay for a random
+length of time after each counter increment.  task2 will increment its
+counter only after every 5th increment of task1&#8217;s counter.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Application demonstrates signaling synchronization using ESOS semaphores</p>
+</div>
+<div class="highlight-c"><div class="highlight"><pre>
+
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>INCLUDEs go here  (First include the main esos.h file)</dt>
+<dd>After that, the user can include what they need</dd>
+</dl>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="cp">#include    &quot;esos.h&quot;</span>
+<span class="cp">#ifdef __linux</span>
+<span class="cp">#include    &quot;esos_pc.h&quot;</span>
+<span class="cp">#include    &quot;esos_pc_stdio.h&quot;</span>
+
+</pre></div>
+</div>
+<p>INCLUDE these so that printf() and our PC hacks work</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="cp">#include &lt;stdio.h&gt;</span>
+<span class="cp">#include &lt;sys/select.h&gt;</span>
+<span class="cp">#include &lt;termios.h&gt;</span>
+<span class="cp">#include &lt;unistd.h&gt;</span>
+<span class="cp">#else</span>
+<span class="cp">#include    &quot;esos_pic24.h&quot;</span>
+<span class="cp">#include    &quot;esos_pic24_rs232.h&quot;</span>
+<span class="cp">#endif</span>
+
+</pre></div>
+</div>
+<p>DEFINEs go here</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="cp">#ifndef __linux</span>
+<span class="cp">#define   CONFIG_LED1()   CONFIG_RB15_AS_DIG_OUTPUT()</span>
+<span class="cp">#define   LED1            _LATB15</span>
+<span class="cp">#else</span>
+<span class="cp">#define   CONFIG_LED1()   printf(&quot;called CONFIG_LED1()\n&quot;);</span>
+<span class="kt">uint8_t</span>     <span class="n">LED1</span> <span class="o">=</span> <span class="n">TRUE</span><span class="p">;</span>      <span class="c1">// LED1 is initially &quot;on&quot;</span>
+<span class="cp">#endif</span>
+
+</pre></div>
+</div>
+<p>PROTOTYPEs go here</p>
+<div class="highlight-c"><div class="highlight"><pre>
+
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>GLOBALs go here</dt>
+<dd>Generally, the user-created semaphores will be defined/allocated here</dd>
+</dl>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">char</span> <span class="n">psz_CRNL</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">=</span> <span class="p">{</span><span class="mh">0x0D</span><span class="p">,</span> <span class="mh">0x0A</span><span class="p">,</span> <span class="mi">0</span><span class="p">};</span>
+<span class="kt">char</span> <span class="n">psz_T1</span><span class="p">[]</span> <span class="o">=</span> <span class="s">&quot;Task 1: &quot;</span><span class="p">;</span>
+<span class="kt">char</span> <span class="n">psz_T2</span><span class="p">[]</span> <span class="o">=</span> <span class="s">&quot;Task 2: &quot;</span><span class="p">;</span>
+
+<span class="n">ESOS_SEMAPHORE</span><span class="p">(</span> <span class="n">sem_T2CanRun</span> <span class="p">);</span>
+
+<span class="cp">#ifdef __linux</span>
+<span class="cm">/*</span>
+<span class="cm"> * Simulate the timer ISR found on a MCU</span>
+<span class="cm"> *   The PC doesn&#39;t have a timer ISR, so this task will periodically</span>
+<span class="cm"> *   call the timer services callback instead.</span>
+<span class="cm"> *   USED ONLY FOR DEVELOPMENT AND TESTING ON PC.</span>
+<span class="cm"> *   Real MCU hardware doesn&#39;t need this task</span>
+<span class="cm"> */</span>
+<span class="n">ESOS_USER_TASK</span><span class="p">(</span> <span class="n">__simulated_isr</span> <span class="p">)</span> <span class="p">{</span>
+  <span class="n">ESOS_TASK_BEGIN</span><span class="p">();</span>
+  <span class="k">while</span> <span class="p">(</span><span class="n">TRUE</span><span class="p">)</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>call the ESOS timer services callback just like a real H/W ISR would</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+    <span class="n">__esos_tmrSvcsExecute</span><span class="p">();</span>
+    <span class="n">ESOS_TASK_WAIT_TICKS</span><span class="p">(</span> <span class="mi">1</span> <span class="p">);</span>
+
+  <span class="p">}</span> <span class="c1">// endof while(TRUE)</span>
+  <span class="n">ESOS_TASK_END</span><span class="p">();</span>
+<span class="p">}</span> <span class="c1">// end child_task</span>
+<span class="cp">#endif</span>
+
+<span class="cm">/************************************************************************</span>
+<span class="cm"> * User supplied functions</span>
+<span class="cm"> ************************************************************************</span>
+<span class="cm"> */</span>
+
+<span class="cm">/*</span>
+<span class="cm"> * return an uint32_t that can be used for a reasonable delay</span>
+<span class="cm"> * should not be too short (~255 ticks) and not too long (~4096 ticks)</span>
+<span class="cm"> */</span>
+<span class="kr">inline</span> <span class="kt">uint32_t</span> <span class="n">getRandomDelay</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">((</span><span class="n">esos_GetRandomUint32</span><span class="p">()</span> <span class="o">&amp;</span> <span class="mh">0x0FFF</span><span class="p">)</span><span class="o">|</span><span class="mh">0x100</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="cm">/*</span>
+<span class="cm"> * An ESOS software timer callback function strobe the heartbeat LED.</span>
+<span class="cm"> *</span>
+<span class="cm"> * Toggles LED1 everytime the callback is called.  Exact period is</span>
+<span class="cm"> * determined by application when this timer callback function is</span>
+<span class="cm"> * registered with ESOS.  See \ref esos_RegisterTimer</span>
+<span class="cm"> * Application can change timer period on-the-fly with \ref esos_ChangeTimerPeriod</span>
+<span class="cm"> *</span>
+<span class="cm"> * \note Since this heartbeat is performed in an ESOS software</span>
+<span class="cm"> * timer callabck, a flashing LED indicates that the ESOS system</span>
+<span class="cm"> * tick ISR is being called properly.  If the LED quits flashing,</span>
+<span class="cm"> * then the ESOS system tick has ceased working.  This probably indicates</span>
+<span class="cm"> * some catastrophic failure of the system.  However, the cause could</span>
+<span class="cm"> * be poorly-behaved user code that is manipulating the hardware registers</span>
+<span class="cm"> * with the timer or interrupt enables directly.  ESOS provides functions</span>
+<span class="cm"> * to change state of interrupts and user code should never modify the</span>
+<span class="cm"> * hardware used by ESOS to implement the system tick.</span>
+<span class="cm"> * \hideinitializer</span>
+<span class="cm"> */</span>
+
+</pre></div>
+</div>
+<p>user-created timer callback</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="n">ESOS_USER_TIMER</span><span class="p">(</span> <span class="n">swTimerLED</span> <span class="p">)</span> <span class="p">{</span>
+  <span class="n">LED1</span> <span class="o">=</span> <span class="o">!</span><span class="n">LED1</span><span class="p">;</span>
+<span class="cp">#ifdef __linux</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">LED1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\a</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="n">fflush</span><span class="p">(</span><span class="n">stdout</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="cp">#endif</span>
+<span class="p">}</span> <span class="c1">//endof swTimerLED</span>
+
+<span class="cm">/* == task1 ==</span>
+<span class="cm"> * Print out a counter value local to this task, then delay</span>
+<span class="cm"> * for a random period of time.  (Delays range from approx.</span>
+<span class="cm"> * 0.25 - 4.1 seconds)</span>
+<span class="cm"> */</span>
+<span class="n">ESOS_USER_TASK</span><span class="p">(</span><span class="n">task1</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">static</span>  <span class="kt">uint8_t</span>           <span class="n">u8_cnt</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+
+  <span class="n">ESOS_TASK_BEGIN</span><span class="p">();</span>
+  <span class="k">while</span> <span class="p">(</span><span class="n">TRUE</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM</span><span class="p">();</span>
+    <span class="n">ESOS_TASK_WAIT_ON_SEND_STRING</span><span class="p">(</span> <span class="n">psz_T1</span> <span class="p">);</span>
+    <span class="n">ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING</span><span class="p">(</span> <span class="n">u8_cnt</span> <span class="p">);</span>
+    <span class="n">ESOS_TASK_WAIT_ON_SEND_STRING</span><span class="p">(</span> <span class="n">psz_CRNL</span> <span class="p">);</span>
+    <span class="n">ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM</span><span class="p">();</span>
+    <span class="n">ESOS_SIGNAL_SEMAPHORE</span><span class="p">(</span><span class="n">sem_T2CanRun</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+    <span class="n">u8_cnt</span><span class="o">++</span><span class="p">;</span>
+    <span class="n">ESOS_TASK_WAIT_TICKS</span><span class="p">(</span> <span class="n">getRandomDelay</span><span class="p">()</span> <span class="p">);</span>
+  <span class="p">}</span> <span class="c1">// endof while(TRUE)</span>
+  <span class="n">ESOS_TASK_END</span><span class="p">();</span>
+<span class="p">}</span> <span class="c1">// end task1()</span>
+
+<span class="cm">/* == task2 ==</span>
+<span class="cm"> * Wait for a signal from task1, then</span>
+<span class="cm"> * Print out a counter value local to this task</span>
+<span class="cm"> */</span>
+<span class="n">ESOS_USER_TASK</span><span class="p">(</span><span class="n">task2</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">static</span>  <span class="kt">uint8_t</span>           <span class="n">u8_cnt</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+
+  <span class="n">ESOS_TASK_BEGIN</span><span class="p">();</span>
+  <span class="k">while</span> <span class="p">(</span><span class="n">TRUE</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">ESOS_TASK_WAIT_SEMAPHORE</span><span class="p">(</span><span class="n">sem_T2CanRun</span><span class="p">,</span> <span class="mi">5</span><span class="p">);</span>
+    <span class="n">ESOS_TASK_WAIT_ON_AVAILABLE_OUT_COMM</span><span class="p">();</span>
+    <span class="n">ESOS_TASK_WAIT_ON_SEND_STRING</span><span class="p">(</span> <span class="n">psz_T2</span> <span class="p">);</span>
+    <span class="n">ESOS_TASK_WAIT_ON_SEND_UINT8_AS_HEX_STRING</span><span class="p">(</span> <span class="n">u8_cnt</span> <span class="p">);</span>
+    <span class="n">ESOS_TASK_WAIT_ON_SEND_STRING</span><span class="p">(</span> <span class="n">psz_CRNL</span> <span class="p">);</span>
+    <span class="n">ESOS_TASK_SIGNAL_AVAILABLE_OUT_COMM</span><span class="p">();</span>
+    <span class="n">u8_cnt</span><span class="o">++</span><span class="p">;</span>
+  <span class="p">}</span> <span class="c1">// endof while(TRUE)</span>
+  <span class="n">ESOS_TASK_END</span><span class="p">();</span>
+<span class="p">}</span> <span class="c1">// end task1()</span>
+
+
+<span class="cm">/****************************************************</span>
+<span class="cm"> *  user_init()</span>
+<span class="cm"> ****************************************************</span>
+<span class="cm"> */</span>
+<span class="kt">void</span> <span class="n">user_init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><p>Call the hardware-provided routines to print the
+HELLO_MSG to the screen.  Must use this call because
+the ESOS communications subsystems is not yet fully
+initialized, since this call is in user_init()</p>
+<p>In general, users should call hardware-specific
+function like this.</p>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">__esos_unsafe_PutString</span><span class="p">(</span> <span class="n">HELLO_MSG</span> <span class="p">);</span>
+
+<span class="cp">#ifdef __linux</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>register our little ESOS task to mimic MCU&#8217;s TIMER T1 IRQ which kicks off
+the ESOS S/W timers when they expire</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">esos_RegisterTask</span><span class="p">(</span> <span class="n">__simulated_isr</span> <span class="p">);</span>
+<span class="cp">#endif</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>configure our hardware to support to support our application</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">CONFIG_LED1</span><span class="p">();</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>initialize the semaphore (initially blocking)</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">ESOS_INIT_SEMAPHORE</span><span class="p">(</span> <span class="n">sem_T2CanRun</span><span class="p">,</span> <span class="mi">0</span> <span class="p">);</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>user_init() should register at least one user task</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">esos_RegisterTask</span><span class="p">(</span><span class="n">task1</span><span class="p">);</span>
+  <span class="n">esos_RegisterTask</span><span class="p">(</span><span class="n">task2</span><span class="p">);</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>register our callback function with ESOS to create a software timer</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">esos_RegisterTimer</span><span class="p">(</span> <span class="n">swTimerLED</span><span class="p">,</span> <span class="mi">250</span> <span class="p">);</span>
+
+<span class="p">}</span> <span class="c1">// end user_init()</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="app_semaphore2.c.html" title="app_semaphore2.c - demonstrates rendezvous synchronization with semaphores"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="app_timerLEDecho.c.html" title="app_timerLEDecho.c - flash an LED using a software timer"
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>runscons.bat - Run SCons, collecting and filtering warnings &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="index.html" />
+    <link rel="up" title="Utilities" href="utilities.html" />
+    <link rel="next" title="SConstruct.py - Build all libraries and examples over many chips" href="SConstruct.py.html" />
+    <link rel="prev" title="runAStyle.bat - enforce code formatting standards" href="runAStyle.bat.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="SConstruct.py.html" title="SConstruct.py - Build all libraries and examples over many chips"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="runAStyle.bat.html" title="runAStyle.bat - enforce code formatting standards"
+             accesskey="P">previous</a> |</li>
+        <li><a href="contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="utilities.html" accesskey="U">Utilities</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="runscons-bat-run-scons-collecting-and-filtering-warnings">
+<h1>runscons.bat - Run SCons, collecting and filtering warnings<a class="headerlink" href="#runscons-bat-run-scons-collecting-and-filtering-warnings" title="Permalink to this headline">¶</a></h1>
+<p>First, run the build, collecting all errors and warnings into <tt class="docutils literal"><span class="pre">err.txt</span></tt>.</p>
+<div class="highlight-bat"><div class="highlight"><pre>
+<span class="k">call</span> scons -j <span class="m">1</span> %* <span class="p">&gt;</span> <span class="n">err</span>.txt <span class="m">2</span>&gt;&amp;<span class="m">1</span>
+</pre></div>
+</div>
+<div class="section" id="remove-warnings-generated-during-compiles">
+<h2>Remove #warnings generated during compiles<a class="headerlink" href="#remove-warnings-generated-during-compiles" title="Permalink to this headline">¶</a></h2>
+<p>Note: the <tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">errn.txt</span></tt> was placed immediately after findstr below, since the
+use of <tt class="docutils literal"><span class="pre">\&quot;</span></tt> confuses cmd.exe (but not findstr). Placing it at the end
+prevents cmd.exe from capturing output to the <tt class="docutils literal"><span class="pre">errn.txt</span></tt> file.</p>
+<p>Likewise, I can&#8217;t use the ^ line continuation character following lines where
+the <tt class="docutils literal"><span class="pre">&quot;</span></tt> symbols don&#8217;t match.</p>
+<div class="highlight-bat"><div class="highlight"><pre>
+findstr <span class="p">&gt;</span> <span class="n">err1</span>.txt <span class="n">/V</span> ^
+<span class="n">/C:&quot;warning:</span> Options have been disabled due to expired license&quot; ^
+<span class="n">/C:&quot;#warning</span> \<span class="s2">&quot;Baud rates of 19200 or lower recommended for this clock choice.\&quot;</span>&quot;  ^
+<span class="n">/C:&quot;#warning</span> \<span class="s2">&quot;Baud rates of 9600 or lower recommended for this clock choice.\&quot;</span>&quot;  ^
+<span class="n">/C:&quot;#warning</span> \<span class="s2">&quot;Using dummy function for configPinsForLowPower() in common/pic24_util.c.\&quot;</span>&quot; ^
+<span class="n">/C:&quot;#warning</span> \<span class="s2">&quot;Edit this file to define bits for your processor!\&quot;</span>&quot;  ^
+<span class="n">/C:&quot;#warning</span> \<span class="s2">&quot;Clock configured&quot;</span> <span class="n">/C:&quot;#warning</span> \<span class="s2">&quot;Using default config bit settings for the &quot;</span> err.txt
+
+findstr <span class="p">&gt;</span> <span class="n">err2</span>.txt <span class="n">/V</span> ^
+<span class="n">/C:&quot;#warning</span> \<span class="s2">&quot;UART2 pin mappings not defined. See comments below for more info.\&quot;</span>&quot; ^
+<span class="n">/C:&quot;#warning</span> \<span class="s2">&quot;UART3 pin mappings not defined. See comments below for more info.\&quot;</span>&quot; ^
+<span class="n">/C:&quot;#warning</span> \<span class="s2">&quot;UART4 pin mappings not defined. See comments below for more info.\&quot;</span>&quot; ^
+<span class="n">/C:&quot;#warning</span> \<span class="s2">&quot;UART1 RX pin configured to RP10(RB10), UART1 TX pin configured to RP11(RB11).\&quot;</span>&quot; ^
+<span class="n">/C:&quot;#warning</span> \<span class="s2">&quot;UART1 RX pin configured to RP42(RB10), UART1 TX pin configured to RP43(RB11).\&quot;</span>&quot; ^
+<span class="n">/C:&quot;#warning</span> \<span class="s2">&quot;Using dummy function for configPinsForLowPower().\&quot;</span>&quot; ^
+<span class="n">/C:&quot;#warning</span> \<span class="s2">&quot;PLL Enabled.\&quot;</span>&quot; ^
+<span class="n">/C:&quot;lib\src\pic24_ecan.c:152:2:</span> warning: #warning \<span class="s2">&quot;ECAN module not configured for current processor frequency! Edit function configECAN1().\&quot;</span>&quot; ^
+<span class="n">/C:&quot;lib\src\pic24_uart.c:263:5:</span> warning: #warning Building configUART<span class="m">1</span>() <span class="k">for</span> the Dangerous Web target.&quot; ^
+<span class="n">/C:&quot;warning:</span> #warning \<span class="s2">&quot;This example only works with the dsPIC33E/PIC24E families\&quot;</span>&quot; ^
+<span class="n">/C:&quot;warning:</span> #warning \<span class="s2">&quot;This example does not work with the dsPIC33E/PIC24E families.\&quot;</span>&quot; ^
+<span class="n">/C:&quot;warning:</span> #warning \<span class="s2">&quot;This is a E family processor, which this example does not support.\&quot;</span>&quot; ^
+<span class="n">/C:&quot;warning:</span> #warning \<span class="s2">&quot;DAC_R2R.C built for SPI-based 12-bit MAX5353 DAC connected to RB14(SDO) and RB13(SCLK).\&quot;</span>&quot; ^
+<span class="n">/C:&quot;warning:</span> #warning \<span class="s2">&quot;This processor selection has the DMA module; this code example is incompatible with a PIC24 CPU that has DMA.\&quot;</span>&quot; ^
+<span class="n">/C:&quot;warning:</span> #warning \<span class="s2">&quot;This example only works with a device that has a secondary oscillator.\&quot;</span>&quot; ^
+<span class="n">/C:&quot;warning:</span> #warning \<span class="s2">&quot;and an RTCC module.\&quot;</span>&quot; ^
+<span class="n">/C:&quot;warning:</span> #warning \<span class="s2">&quot;This processor selection does not have a DMA module; this code example is incompatible with a PIC24 CPU that does not have DMA.\&quot;</span>&quot;  ^
+<span class="n">/C:&quot;warning:</span> #warning \<span class="s2">&quot;OR this is a E family processor, which this example does not support.\&quot;</span>&quot; ^
+<span class="n">/C:&quot;warning:</span> #warning \<span class="s2">&quot;For all PIC24F and some PIC24E/dsPIC33E family members, the DATA_FLASH_PAGE is set to the second to last flash page instead of the last page,\&quot;</span>&quot; ^
+<span class="n">/C:&quot;warning:</span> #warning \<span class="s2">&quot;as the last flash page in the 24F family contains the configuration bits.\&quot;</span>&quot; ^
+<span class="n">/C:&quot;warning:</span> #warning Building configUART<span class="m">1</span>() <span class="k">for</span> the Rev.F<span class="m">14</span> Embedded Systems target.&quot; ^
+<span class="n">/C:&quot;warning:</span> #warning Building configUART<span class="m">1</span>() <span class="k">for</span> the Rev.C<span class="m">1</span> Embedded Systems target.&quot; ^
+<span class="n">/C:&quot;warning:</span> #warning Building configUART<span class="m">1</span>() <span class="k">for</span> the StarterBoard_<span class="m">28</span>P target.&quot; ^
+<span class="n">/C:&quot;#warning</span> \<span class="s2">&quot;Ensure that the PLLDIV value is set to divide by 2 in the configuration bits for &quot;</span> err<span class="m">1</span>.txt
+</pre></div>
+</div>
+</div>
+<div class="section" id="work-around-compiler-warnings-i-can-t-figure-out-how-to-suppress">
+<h2>Work around compiler warnings I can&#8217;t figure out how to suppress<a class="headerlink" href="#work-around-compiler-warnings-i-can-t-figure-out-how-to-suppress" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-bat"><div class="highlight"><pre>
+findstr <span class="p">&gt;</span> <span class="n">err3</span>.txt <span class="n">/V</span> ^
+<span class="n">/C:&quot;\bootloader\pic24_dspic33_bootloader.X\mem.c:106:1:</span> warning: control reaches end of non-void function&quot; ^
+<span class="n">/C:&quot;warning:</span> Taking the address of &#39;&quot; ^
+err<span class="m">2</span>.txt
+
+
+
+
+</pre></div>
+</div>
+</div>
+<div class="section" id="output-only-errors-and-warnings">
+<h2>Output only errors and warnings.<a class="headerlink" href="#output-only-errors-and-warnings" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-bat"><div class="highlight"><pre>
+findstr <span class="n">/C:&quot;warning&quot;</span> <span class="n">/C:&quot;error&quot;</span> err<span class="m">3</span>.txt <span class="p">&gt;</span> <span class="n">build_errors</span>.txt
+<span class="k">echo</span> Errors and warnings:
+type build_errors.txt
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="SConstruct.py.html" title="SConstruct.py - Build all libraries and examples over many chips"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="runAStyle.bat.html" title="runAStyle.bat - enforce code formatting standards"
+             >previous</a> |</li>
+        <li><a href="contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="utilities.html" >Utilities</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

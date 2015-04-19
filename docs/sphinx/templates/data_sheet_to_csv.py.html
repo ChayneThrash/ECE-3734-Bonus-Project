@@ -1,0 +1,574 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>data_sheet_to_csv.py - GUI to assist in translating Microchip data sheets to pin mappings &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Utilities" href="../utilities.html" />
+    <link rel="next" title="compect_csv.py - Group all processors with identical mappings together" href="compact_csv.py.html" />
+    <link rel="prev" title="SConscript.py - Build source files from template" href="SConscript.py.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="compact_csv.py.html" title="compect_csv.py - Group all processors with identical mappings together"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="SConscript.py.html" title="SConscript.py - Build source files from template"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../utilities.html" accesskey="U">Utilities</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="data-sheet-to-csv-py-gui-to-assist-in-translating-microchip-data-sheets-to-pin-mappings">
+<h1>data_sheet_to_csv.py - GUI to assist in translating Microchip data sheets to pin mappings<a class="headerlink" href="#data-sheet-to-csv-py-gui-to-assist-in-translating-microchip-data-sheets-to-pin-mappings" title="Permalink to this headline">¶</a></h1>
+<p>This program accepts text copied and pasted from a Microchip data sheet (in
+PDF format) of the pinout for a given package, then translates it into an
+Rxy/RPy/ANn/CNm mapping.</p>
+<p>To build as an executable:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="n">pyinstaller</span> <span class="n">data_sheet_to_csv</span><span class="p">.</span><span class="n">py</span> <span class="o">-</span><span class="n">y</span>
+</pre></div>
+</div>
+<div class="highlight-c"><div class="highlight"><pre>
+
+import re
+import sys
+import csv
+import os
+
+import sip
+sip.setapi(&#39;QString&#39;, 2)
+sip.setapi(&#39;QVariant&#39;, 2)
+
+</pre></div>
+</div>
+<p>The excellent <a class="reference external" href="http://www.riverbankcomputing.co.uk/static/Docs/PyQt4/html/classes.html">PyQt4 library</a> provides the GUI for this package.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+from PyQt4 import QtGui, QtCore, uic
+
+from compact_csv import enumeratePic24Ports
+
+
+def text_pinout_to_mapping(text):
+    pins = text.split()
+    RPy = { }
+    ANn = { }
+    CNm = { }
+    last_failure = &#39;&#39;
+    last_pin = &#39;&#39;
+    for pin in pins:
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Look for Rxy. If not found, we can&#8217;t do anything with this pin.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+        mo = re.search(&#39;R([A-K]\d\d?)&#39;, pin)
+        if mo:
+            Rxy = mo.group(1)
+        else:
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>No Rxy pin here, so we can&#8217;t map. Do error checking anyway.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+            Rxy = &#39;&#39;
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Look for RPy.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+        mo = re.search(&#39;RPI?(\d\d?\d?)&#39;, pin)
+        if mo:
+            if not Rxy:
+                last_failure = &#39;Warning: found RPy without finding Rxy in &#39; + pin
+                last_pin = pin
+            else:
+                RPy[Rxy] = mo.group(1)
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Look for ANn.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+        mo = re.search(&#39;AN(\d\d?)&#39;, pin)
+        if mo:
+            if not Rxy:
+                last_failure = &#39;Warning: found ANn without finding Rxy in &#39; + pin
+                last_pin = pin
+            else:
+                ANn[Rxy] = mo.group(1)
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Look for CNm.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+        mo = re.search(&#39;CN(\d\d?)&#39;, pin)
+        if mo:
+            if not Rxy:
+                last_failure = &#39;Warning: found CNm without finding Rxy in &#39; + pin
+                last_pin = pin
+            else:
+                CNm[Rxy] = mo.group(1)
+
+    return RPy, ANn, CNm, last_failure, last_pin
+
+form_class, base_class = uic.loadUiType(&#39;data_sheet_to_csv.ui&#39;)
+
+class main_dialog(QtGui.QMainWindow, form_class):
+    def __init__(self):
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Let Qt and PyQt run their init first.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+        <span class="n">QtGui</span><span class="p">.</span><span class="n">QDialog</span><span class="p">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">setupUi</span><span class="p">(</span><span class="n">self</span><span class="p">)</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Store portlist, which is used several times.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+        self.portlist = enumeratePic24Ports()
+        self.portlist.insert(0, &#39;Device port / pin&#39;)
+
+    def parse_gui_text(self):
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Read the GUI text fields and parse out pin mapping and procesor name.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+        <span class="n">pinout_text</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">pinout_text_edit</span><span class="p">.</span><span class="n">toPlainText</span><span class="p">()</span>
+        <span class="n">RPy</span><span class="p">,</span> <span class="n">ANn</span><span class="p">,</span> <span class="n">CNm</span><span class="p">,</span> <span class="n">last_failure</span><span class="p">,</span> <span class="n">last_pin</span> <span class="o">=</span> <span class="n">text_pinout_to_mapping</span><span class="p">(</span><span class="n">pinout_text</span><span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">statusBar</span><span class="p">().</span><span class="n">showMessage</span><span class="p">(</span><span class="n">last_failure</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">last_pin</span><span class="o">:</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Select failing text, assuming it was unique</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+            cursor = self.pinout_text_edit.textCursor()
+            i = pinout_text.index(last_pin)
+            cursor.setPosition(i)
+            cursor.setPosition(i + len(last_pin), QtGui.QTextCursor.KeepAnchor)
+            self.pinout_text_edit.setTextCursor(cursor)
+        processor_names = &#39; &#39;.join([s for s in self.processors_text_edit.toPlainText().split() if &#39;PIC&#39; in s])
+        return processor_names, RPy, ANn, CNm
+
+    def on_pinout_text_edit_textChanged(self):
+        self.update_table()
+
+    def on_processors_text_edit_textChanged(self):
+        self.update_table()
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>A helper to create an uneditable QTableWidgetItem</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+    <span class="n">def</span> <span class="n">QTableWidgetItemUneditable</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span><span class="o">:</span>
+        <span class="n">qtwi</span> <span class="o">=</span> <span class="n">QtGui</span><span class="p">.</span><span class="n">QTableWidgetItem</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+        <span class="n">qtwi</span><span class="p">.</span><span class="n">setFlags</span><span class="p">(</span><span class="n">qtwi</span><span class="p">.</span><span class="n">flags</span><span class="p">()</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">QtCore</span><span class="p">.</span><span class="n">Qt</span><span class="p">.</span><span class="n">ItemIsEditable</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">qtwi</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Display results for the user.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+    def update_table(self):
+        processor_names, RPy, ANn, CNm = self.parse_gui_text()
+        self.results_label.setText(&#39;Results: &#39; + processor_names)
+        self.results_table_widget.clearContents()
+        self.results_table_widget.setRowCount(128)
+        row = 0
+        for Rxy in self.portlist[1:]:
+            if (Rxy in RPy) or (Rxy in ANn) or (Rxy in CNm):
+                self.results_table_widget.setItem(row, 0, self.QTableWidgetItemUneditable(RPy.get(Rxy, &#39;&#39;)))
+
+                self.results_table_widget.setItem(row, 1, self.QTableWidgetItemUneditable(ANn.get(Rxy, &#39;&#39;)))
+
+                self.results_table_widget.setItem(row, 2, self.QTableWidgetItemUneditable(CNm.get(Rxy, &#39;&#39;)))
+
+                self.results_table_widget.setVerticalHeaderItem(row, QtGui.QTableWidgetItem(Rxy))
+
+                row += 1
+
+        self.results_table_widget.setRowCount(row)
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>This is called when OK is clicked. Append a CSV entry.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+    <span class="n">def</span> <span class="n">on_buttonBox_accepted</span><span class="p">(</span><span class="n">self</span><span class="p">)</span><span class="o">:</span>
+        <span class="n">processor_names</span><span class="p">,</span> <span class="n">RPy</span><span class="p">,</span> <span class="n">ANn</span><span class="p">,</span> <span class="n">CNm</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">parse_gui_text</span><span class="p">()</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Prepare for appending to the CSV.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+        with open(&#39;pic24_devices.csv&#39;, &#39;a+b&#39;) as outFile:
+            csv_dict_writer = csv.DictWriter(outFile, self.portlist)
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Write the header only if the file is empty. (Leaving out the seek always reports 0 for the tell).</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+            <span class="n">outFile</span><span class="p">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="p">.</span><span class="n">SEEK_END</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">outFile</span><span class="p">.</span><span class="n">tell</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="o">:</span>
+                <span class="n">csv_dict_writer</span><span class="p">.</span><span class="n">writeheader</span><span class="p">()</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Write it to the CSV.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+            RPy[&#39;Device port / pin&#39;] = processor_names + &#39; RPy&#39;
+            ANn[&#39;Device port / pin&#39;] = processor_names + &#39; ANn&#39;
+            CNm[&#39;Device port / pin&#39;] = processor_names + &#39; CNm&#39;
+            csv_dict_writer.writerow(RPy)
+            csv_dict_writer.writerow(ANn)
+            csv_dict_writer.writerow(CNm)
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Display success, set up for next run.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+        self.statusBar().showMessage(&#39;CSV updated.&#39;, 3000)
+        self.processors_text_edit.clear()
+        self.pinout_text_edit.clear()
+        self.results_label.setText(&#39;Results&#39;)
+
+</pre></div>
+</div>
+<p>This routine runs the CodeChat GUI.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="n">def</span> <span class="n">main</span><span class="p">()</span><span class="o">:</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Instantiate the app and GUI.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">QtGui</span><span class="p">.</span><span class="n">QApplication</span><span class="p">(</span><span class="n">sys</span><span class="p">.</span><span class="n">argv</span><span class="p">)</span>
+    <span class="n">window</span> <span class="o">=</span> <span class="n">main_dialog</span><span class="p">()</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Run the program.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+    window.show()
+    sys.exit(app.exec_())
+
+if __name__ == &#39;__main__&#39;:
+    main()
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="compact_csv.py.html" title="compect_csv.py - Group all processors with identical mappings together"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="SConscript.py.html" title="SConscript.py - Build source files from template"
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../utilities.html" >Utilities</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>rtcc.c - Demonstrates use of the Real Time Clock Calendar Module with an external 32.768 kHZ crystal for timekeeping. &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="mcp25lc256_spi_eeprom.c - Demonstrate SPI usage" href="mcp25lc256_spi_eeprom.c.html" />
+    <link rel="prev" title="rtcc.c - Demonstrates using the secondary oscillator with a 32768 Hz oscillator" href="timer1_sosc.c.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="mcp25lc256_spi_eeprom.c.html" title="mcp25lc256_spi_eeprom.c - Demonstrate SPI usage"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="timer1_sosc.c.html" title="rtcc.c - Demonstrates using the secondary oscillator with a 32768 Hz oscillator"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="rtcc-c-demonstrates-use-of-the-real-time-clock-calendar-module-with-an-external-32-768-khz-crystal-for-timekeeping">
+<h1>rtcc.c - Demonstrates use of the Real Time Clock Calendar Module with an external 32.768 kHZ crystal for timekeeping.<a class="headerlink" href="#rtcc-c-demonstrates-use-of-the-real-time-clock-calendar-module-with-an-external-32-768-khz-crystal-for-timekeeping" title="Permalink to this headline">¶</a></h1>
+<p>Only works a device with a real time clock calendar module (some PIC24H/F, dsPIC33F devices, few PIC24E/dsPIC33E).</p>
+<div class="highlight-c"><div class="highlight"><pre>
+
+<span class="cp">#include &quot;pic24_all.h&quot;</span>
+<span class="cp">#include &lt;stdio.h&gt;</span>
+
+<span class="cp">#if !defined(_LPOSCEN) || !defined(_RTCSYNC)</span>
+<span class="cp"># warning &quot;This example only works with a device that has a secondary oscillator.&quot;</span>
+<span class="cp"># warning &quot;and an RTCC module.&quot;</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="cp">#else</span>
+
+
+<span class="k">typedef</span> <span class="k">union</span> <span class="n">_unionRTCC</span> <span class="p">{</span>
+  <span class="k">struct</span> <span class="p">{</span>  <span class="c1">//four 16 bit registers</span>
+    <span class="kt">uint8_t</span> <span class="n">yr</span><span class="p">;</span>
+    <span class="kt">uint8_t</span> <span class="n">null</span><span class="p">;</span>
+    <span class="kt">uint8_t</span> <span class="n">date</span><span class="p">;</span>
+    <span class="kt">uint8_t</span> <span class="n">month</span><span class="p">;</span>
+    <span class="kt">uint8_t</span> <span class="n">hour</span><span class="p">;</span>
+    <span class="kt">uint8_t</span> <span class="n">wday</span><span class="p">;</span>
+    <span class="kt">uint8_t</span> <span class="n">sec</span><span class="p">;</span>
+    <span class="kt">uint8_t</span> <span class="n">min</span><span class="p">;</span>
+  <span class="p">}</span> <span class="n">u8</span><span class="p">;</span>
+  <span class="kt">uint16_t</span> <span class="n">regs</span><span class="p">[</span><span class="mi">4</span><span class="p">];</span>
+<span class="p">}</span> <span class="n">unionRTCC</span><span class="p">;</span>
+
+<span class="n">unionRTCC</span> <span class="n">u_RTCC</span><span class="p">;</span>
+
+<span class="kt">uint8_t</span> <span class="nf">getBCDvalue</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">sz_1</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">char</span> <span class="n">sz_buff</span><span class="p">[</span><span class="mi">8</span><span class="p">];</span>
+  <span class="kt">uint16_t</span> <span class="n">u16_bin</span><span class="p">;</span>
+  <span class="kt">uint8_t</span>  <span class="n">u8_bcd</span><span class="p">;</span>
+  <span class="n">outString</span><span class="p">(</span><span class="n">sz_1</span><span class="p">);</span>
+  <span class="n">inStringEcho</span><span class="p">(</span><span class="n">sz_buff</span><span class="p">,</span><span class="mi">7</span><span class="p">);</span>
+  <span class="n">sscanf</span><span class="p">(</span><span class="n">sz_buff</span><span class="p">,</span><span class="s">&quot;%d&quot;</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">u16_bin</span><span class="p">);</span>
+  <span class="n">u8_bcd</span> <span class="o">=</span> <span class="n">u16_bin</span><span class="o">/</span><span class="mi">10</span><span class="p">;</span>   <span class="c1">//most significant digit</span>
+  <span class="n">u8_bcd</span> <span class="o">=</span> <span class="n">u8_bcd</span> <span class="o">&lt;&lt;</span> <span class="mi">4</span><span class="p">;</span>
+  <span class="n">u8_bcd</span> <span class="o">=</span> <span class="n">u8_bcd</span> <span class="o">|</span> <span class="p">(</span><span class="n">u16_bin</span><span class="o">%</span><span class="mi">10</span><span class="p">);</span>
+  <span class="k">return</span><span class="p">(</span><span class="n">u8_bcd</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">getDateFromUser</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">u_RTCC</span><span class="p">.</span><span class="n">u8</span><span class="p">.</span><span class="n">yr</span> <span class="o">=</span> <span class="n">getBCDvalue</span><span class="p">(</span><span class="s">&quot;Enter year (0-99): &quot;</span><span class="p">);</span>
+  <span class="n">u_RTCC</span><span class="p">.</span><span class="n">u8</span><span class="p">.</span><span class="n">month</span> <span class="o">=</span> <span class="n">getBCDvalue</span><span class="p">(</span><span class="s">&quot;Enter month (1-12): &quot;</span><span class="p">);</span>
+  <span class="n">u_RTCC</span><span class="p">.</span><span class="n">u8</span><span class="p">.</span><span class="n">date</span> <span class="o">=</span> <span class="n">getBCDvalue</span><span class="p">(</span><span class="s">&quot;Enter day of month (1-31): &quot;</span><span class="p">);</span>
+  <span class="n">u_RTCC</span><span class="p">.</span><span class="n">u8</span><span class="p">.</span><span class="n">wday</span> <span class="o">=</span> <span class="n">getBCDvalue</span><span class="p">(</span><span class="s">&quot;Enter week day (0-6): &quot;</span><span class="p">);</span>
+  <span class="n">u_RTCC</span><span class="p">.</span><span class="n">u8</span><span class="p">.</span><span class="n">hour</span> <span class="o">=</span> <span class="n">getBCDvalue</span><span class="p">(</span><span class="s">&quot;Enter hour (0-23): &quot;</span><span class="p">);</span>
+  <span class="n">u_RTCC</span><span class="p">.</span><span class="n">u8</span><span class="p">.</span><span class="n">min</span> <span class="o">=</span> <span class="n">getBCDvalue</span><span class="p">(</span><span class="s">&quot;Enter min (0-59): &quot;</span><span class="p">);</span>
+  <span class="n">u_RTCC</span><span class="p">.</span><span class="n">u8</span><span class="p">.</span><span class="n">sec</span> <span class="o">=</span> <span class="n">getBCDvalue</span><span class="p">(</span><span class="s">&quot;Enter sec(0-59): &quot;</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">//set date</span>
+<span class="kt">void</span> <span class="nf">setRTCC</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">uint8_t</span> <span class="n">u8_i</span><span class="p">;</span>
+  <span class="n">__builtin_write_RTCWEN</span><span class="p">();</span>   <span class="c1">//enable write to RTCC, sets RTCWEN</span>
+  <span class="n">RCFGCALbits</span><span class="p">.</span><span class="n">RTCEN</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>      <span class="c1">//disable the RTCC</span>
+  <span class="n">RCFGCALbits</span><span class="p">.</span><span class="n">RTCPTR</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>     <span class="c1">//set pointer reg to start</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u8_i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">&lt;</span><span class="mi">4</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">++</span><span class="p">)</span> <span class="n">RTCVAL</span> <span class="o">=</span> <span class="n">u_RTCC</span><span class="p">.</span><span class="n">regs</span><span class="p">[</span><span class="n">u8_i</span><span class="p">];</span>
+  <span class="n">RCFGCALbits</span><span class="p">.</span><span class="n">RTCEN</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>     <span class="c1">//Enable the RTCC</span>
+  <span class="n">RCFGCALbits</span><span class="p">.</span><span class="n">RTCWREN</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>   <span class="c1">//can clear without unlock</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">readRTCC</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">uint8_t</span> <span class="n">u8_i</span><span class="p">;</span>
+  <span class="n">RCFGCALbits</span><span class="p">.</span><span class="n">RTCPTR</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>     <span class="c1">//set pointer reg to start</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u8_i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">&lt;</span><span class="mi">4</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">++</span><span class="p">)</span> <span class="n">u_RTCC</span><span class="p">.</span><span class="n">regs</span><span class="p">[</span><span class="n">u8_i</span><span class="p">]</span> <span class="o">=</span> <span class="n">RTCVAL</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">printRTCC</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">printf</span> <span class="p">(</span><span class="s">&quot;day(wday)/mon/yr: %2x(%2x)/%2x/%2x, %02x:%02x:%02x </span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+          <span class="p">(</span><span class="kt">uint16_t</span><span class="p">)</span> <span class="n">u_RTCC</span><span class="p">.</span><span class="n">u8</span><span class="p">.</span><span class="n">date</span><span class="p">,(</span><span class="kt">uint16_t</span><span class="p">)</span> <span class="n">u_RTCC</span><span class="p">.</span><span class="n">u8</span><span class="p">.</span><span class="n">wday</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint16_t</span><span class="p">)</span> <span class="n">u_RTCC</span><span class="p">.</span><span class="n">u8</span><span class="p">.</span><span class="n">month</span><span class="p">,</span>
+          <span class="p">(</span><span class="kt">uint16_t</span><span class="p">)</span> <span class="n">u_RTCC</span><span class="p">.</span><span class="n">u8</span><span class="p">.</span><span class="n">yr</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint16_t</span><span class="p">)</span> <span class="n">u_RTCC</span><span class="p">.</span><span class="n">u8</span><span class="p">.</span><span class="n">hour</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint16_t</span><span class="p">)</span> <span class="n">u_RTCC</span><span class="p">.</span><span class="n">u8</span><span class="p">.</span><span class="n">min</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint16_t</span><span class="p">)</span> <span class="n">u_RTCC</span><span class="p">.</span><span class="n">u8</span><span class="p">.</span><span class="n">sec</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">__builtin_write_OSCCONL</span><span class="p">(</span><span class="n">OSCCON</span> <span class="o">|</span> <span class="mh">0x02</span><span class="p">);</span>    <span class="c1">//  OSCCON.SOSCEN=1;</span>
+  <span class="n">configBasic</span><span class="p">(</span><span class="n">HELLO_MSG</span><span class="p">);</span>   <span class="c1">//say Hello!</span>
+  <span class="n">getDateFromUser</span><span class="p">();</span>    <span class="c1">//get initial date/time</span>
+  <span class="n">setRTCC</span><span class="p">();</span>            <span class="c1">//set the date/time</span>
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">RCFGCALbits</span><span class="p">.</span><span class="n">RTCSYNC</span><span class="p">)</span> <span class="n">doHeartbeat</span><span class="p">();</span>
+    <span class="n">readRTCC</span><span class="p">();</span>
+    <span class="n">printRTCC</span><span class="p">();</span>
+    <span class="n">DELAY_MS</span><span class="p">(</span><span class="mi">30</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">#endif</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="mcp25lc256_spi_eeprom.c.html" title="mcp25lc256_spi_eeprom.c - Demonstrate SPI usage"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="timer1_sosc.c.html" title="rtcc.c - Demonstrates using the secondary oscillator with a 32768 Hz oscillator"
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>runAStyle.bat - enforce code formatting standards &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="index.html" />
+    <link rel="up" title="Utilities" href="utilities.html" />
+    <link rel="next" title="runscons.bat - Run SCons, collecting and filtering warnings" href="runscons.bat.html" />
+    <link rel="prev" title="Utilities" href="utilities.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="runscons.bat.html" title="runscons.bat - Run SCons, collecting and filtering warnings"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="utilities.html" title="Utilities"
+             accesskey="P">previous</a> |</li>
+        <li><a href="contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="utilities.html" accesskey="U">Utilities</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="runastyle-bat-enforce-code-formatting-standards">
+<h1>runAStyle.bat - enforce code formatting standards<a class="headerlink" href="#runastyle-bat-enforce-code-formatting-standards" title="Permalink to this headline">¶</a></h1>
+<p>To maintain a consistent style, this batch file runs the <a class="reference external" href="http://astyle.sourceforge.net/">Artistic Style</a> code formatter on all sources in the library.</p>
+<div class="highlight-bat"><div class="highlight"><pre>
+
+bin\astyle --brackets<span class="o">=</span>attach --indent-switches --indent<span class="o">=</span>spaces<span class="o">=</span><span class="m">2</span> --recursive --exclude<span class="o">=</span>build --lineend<span class="o">=</span>linux --suffix<span class="o">=</span>none --formatted --convert-tabs *.c *.h
+<span class="p">@</span><span class="k">echo</span> <span class="k">off</span>
+</pre></div>
+</div>
+<p>Notes on options (see <a class="reference external" href="http://astyle.sourceforge.net/astyle.html">http://astyle.sourceforge.net/astyle.html</a> for more information):</p>
+<table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--brackets=<var>attach</var></span>, <span class="option">-a</span></kbd></td>
+</tr>
+<tr><td>&nbsp;</td><td>Attach brackets to their pre-block statements (e.g. Java / K&amp;R style).</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--indent-switches</span>, <span class="option">-S</span></kbd></td>
+</tr>
+<tr><td>&nbsp;</td><td>Indent <tt class="docutils literal"><span class="pre">switch</span></tt> blocks so that the <tt class="docutils literal"><span class="pre">case</span> <span class="pre">X:</span></tt> statements are indented in the switch block. The entire case block is indented.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--indent=<var>spaces</var></span>, <span class="option">-s<var>&lt;#&gt;</var></span></kbd></td>
+</tr>
+<tr><td>&nbsp;</td><td>Indent using # spaces per indent</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--recursive</span>, <span class="option">-r</span>, <span class="option">-R</span></kbd></td>
+</tr>
+<tr><td>&nbsp;</td><td>For each directory in the command line, process all subdirectories recursively.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--suffix=<var>none</var></span>, <span class="option">-n</span></kbd></td>
+</tr>
+<tr><td>&nbsp;</td><td>Do not retain a backup of the original file. The original file is purged after it is formatted.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--lineend=<var>linux</var></span></kbd></td>
+</tr>
+<tr><td>&nbsp;</td><td>Force use of the specified line end style. Also -z2.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--formatted</span>, <span class="option">-Q</span></kbd></td>
+</tr>
+<tr><td>&nbsp;</td><td>Formatted files display  mode. Display only the files that have been formatted. Do not display files that are unchanged.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--convert-tabs</span>, <span class="option">-c</span></kbd></td>
+</tr>
+<tr><td>&nbsp;</td><td>Converts tabs into spaces in the non-indentation part of the line.</td></tr>
+</tbody>
+</table>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="runscons.bat.html" title="runscons.bat - Run SCons, collecting and filtering warnings"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="utilities.html" title="Utilities"
+             >previous</a> |</li>
+        <li><a href="contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="utilities.html" >Utilities</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

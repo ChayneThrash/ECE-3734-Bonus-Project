@@ -1,0 +1,145 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>filt_test.c - test an extern low-pass RC filter effectiveness by generating a pulse train that is read by another port &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="softfilt_test.c - Implements a software filter for input pulses less than a specified duration." href="softfilt_test.c.html" />
+    <link rel="prev" title="squarewave.c - Generates a square wave using timer 2 and an ISR." href="squarewave.c.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="softfilt_test.c.html" title="softfilt_test.c - Implements a software filter for input pulses less than a specified duration."
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="squarewave.c.html" title="squarewave.c - Generates a square wave using timer 2 and an ISR."
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="filt-test-c-test-an-extern-low-pass-rc-filter-effectiveness-by-generating-a-pulse-train-that-is-read-by-another-port">
+<h1>filt_test.c - test an extern low-pass RC filter effectiveness by generating a pulse train that is read by another port<a class="headerlink" href="#filt-test-c-test-an-extern-low-pass-rc-filter-effectiveness-by-generating-a-pulse-train-that-is-read-by-another-port" title="Permalink to this headline">¶</a></h1>
+<p>Low-pass RC Filter test. RB2 generates a pulse train that is read by RB3, the external RC filter is assumed to be on the RB3 input.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+
+<span class="cp">#include &quot;pic24_all.h&quot;</span>
+
+
+</pre></div>
+</div>
+<p>Use RB2 as the test output (TOUT).</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="cp">#define CONFIG_TOUT() CONFIG_RB2_AS_DIG_OUTPUT()</span>
+<span class="cp">#define TOUT (_LATB2)</span>
+
+</pre></div>
+</div>
+<p>Use RB3 as the RC filter test intput (TIN).</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="cp">#define CONFIG_TIN()  CONFIG_RB3_AS_DIG_INPUT();</span>
+<span class="cp">#define TIN (_RB3)</span>
+
+</pre></div>
+</div>
+<p>Define the pulse width of TOUT in ms.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="cp">#define TPW  (1)</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">uint8_t</span> <span class="n">u8_oldvalueTIN</span><span class="p">;</span>
+
+  <span class="n">configBasic</span><span class="p">(</span><span class="n">HELLO_MSG</span><span class="p">);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>TOUT drives TIN. Have a value ready when it&#8217;s enabled.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">TOUT</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="n">CONFIG_TIN</span><span class="p">();</span>
+  <span class="n">CONFIG_TOUT</span><span class="p">();</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Wait for output to stablize because of filter.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">DELAY_MS</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span>
+  <span class="n">u8_oldvalueTIN</span> <span class="o">=</span> <span class="n">TIN</span><span class="p">;</span>
+
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">TOUT</span> <span class="o">=</span> <span class="o">!</span><span class="n">TOUT</span><span class="p">;</span>
+    <span class="n">DELAY_MS</span><span class="p">(</span><span class="n">TPW</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">u8_oldvalueTIN</span> <span class="o">!=</span> <span class="n">TIN</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">u8_oldvalueTIN</span> <span class="o">=</span> <span class="n">TIN</span><span class="p">;</span>
+      <span class="n">outString</span><span class="p">(</span><span class="s">&quot;*&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="softfilt_test.c.html" title="softfilt_test.c - Implements a software filter for input pulses less than a specified duration."
+             >next</a> |</li>
+        <li class="right" >
+          <a href="squarewave.c.html" title="squarewave.c - Generates a square wave using timer 2 and an ISR."
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

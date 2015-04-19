@@ -1,0 +1,280 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>keypad.c - Implements a 4x3 key scanned keypad interface. &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="rot_enc_trace.c - Demonstrates use of an ISR trace buffer for capturing the states of a rotary encoder." href="rot_enc_trace.c.html" />
+    <link rel="prev" title="rot_enc.c - A 2-bit incremental Gray code rotary encoder example" href="rot_enc.c.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="rot_enc_trace.c.html" title="rot_enc_trace.c - Demonstrates use of an ISR trace buffer for capturing the states of a rotary encoder."
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="rot_enc.c.html" title="rot_enc.c - A 2-bit incremental Gray code rotary encoder example"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="keypad-c-implements-a-4x3-key-scanned-keypad-interface">
+<h1>keypad.c - Implements a 4x3 key scanned keypad interface.<a class="headerlink" href="#keypad-c-implements-a-4x3-key-scanned-keypad-interface" title="Permalink to this headline">¶</a></h1>
+<p>Implements a 4x3 key scanned keypad interface. A periodic timer interrupt is used to poll the keypad. Thanks goes to David Weaver for suggestions on improvements to the scan function.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+
+<span class="cp">#include &quot;pic24_all.h&quot;</span>
+
+<span class="cp">#define C0 _RB9</span>
+<span class="cp">#define C1 _RB8</span>
+<span class="cp">#define C2 _RB7</span>
+<span class="cp">#define C3 _RB6</span>
+
+<span class="k">static</span> <span class="kr">inline</span> <span class="kt">void</span> <span class="nf">CONFIG_COLUMN</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">CONFIG_RB9_AS_DIG_INPUT</span><span class="p">();</span>
+  <span class="n">ENABLE_RB9_PULLUP</span><span class="p">();</span>
+  <span class="n">CONFIG_RB8_AS_DIG_INPUT</span><span class="p">();</span>
+  <span class="n">ENABLE_RB8_PULLUP</span><span class="p">();</span>
+  <span class="n">CONFIG_RB7_AS_DIG_INPUT</span><span class="p">();</span>
+  <span class="n">ENABLE_RB7_PULLUP</span><span class="p">();</span>
+  <span class="n">CONFIG_RB6_AS_DIG_INPUT</span><span class="p">();</span>
+  <span class="n">ENABLE_RB6_PULLUP</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="cp">#define R0 _LATB5</span>
+<span class="cp">#define R1 _LATB4</span>
+<span class="cp">#define R2 _LATB3</span>
+
+<span class="cp">#define CONFIG_R0_DIG_OUTPUT() CONFIG_RB5_AS_DIG_OUTPUT()</span>
+<span class="cp">#define CONFIG_R1_DIG_OUTPUT() CONFIG_RB4_AS_DIG_OUTPUT()</span>
+<span class="cp">#define CONFIG_R2_DIG_OUTPUT() CONFIG_RB3_AS_DIG_OUTPUT()</span>
+
+<span class="kt">void</span> <span class="nf">CONFIG_ROW</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">CONFIG_R0_DIG_OUTPUT</span><span class="p">();</span>
+  <span class="n">CONFIG_R1_DIG_OUTPUT</span><span class="p">();</span>
+  <span class="n">CONFIG_R2_DIG_OUTPUT</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kr">inline</span> <span class="kt">void</span> <span class="nf">DRIVE_ROW_LOW</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">R0</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">R1</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">R2</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kr">inline</span> <span class="kt">void</span> <span class="nf">DRIVE_ROW_HIGH</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">R0</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="n">R1</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="n">R2</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">configKeypad</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">CONFIG_ROW</span><span class="p">();</span>
+  <span class="n">DRIVE_ROW_LOW</span><span class="p">();</span>
+  <span class="n">CONFIG_COLUMN</span><span class="p">();</span>
+  <span class="n">DELAY_US</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>     <span class="c1">//wait for pullups to stabilize inputs</span>
+<span class="p">}</span>
+
+<span class="c1">//drive one row low</span>
+<span class="kt">void</span> <span class="nf">setOneRowLow</span><span class="p">(</span><span class="kt">uint8_t</span> <span class="n">u8_x</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">switch</span> <span class="p">(</span><span class="n">u8_x</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">case</span> <span class="mi">0</span>:
+      <span class="n">R0</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="n">R1</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+      <span class="n">R2</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+      <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="mi">1</span>:
+      <span class="n">R0</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+      <span class="n">R1</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="n">R2</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+      <span class="k">break</span><span class="p">;</span>
+    <span class="nl">default:</span>
+      <span class="n">R0</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+      <span class="n">R1</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+      <span class="n">R2</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="k">break</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">#define NUM_ROWS 3</span>
+<span class="cp">#define NUM_COLS 4</span>
+<span class="k">const</span> <span class="kt">uint8_t</span> <span class="n">au8_keyTable</span><span class="p">[</span><span class="n">NUM_ROWS</span><span class="p">][</span><span class="n">NUM_COLS</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="p">{</span><span class="sc">&#39;1&#39;</span><span class="p">,</span> <span class="sc">&#39;4&#39;</span><span class="p">,</span> <span class="sc">&#39;7&#39;</span><span class="p">,</span> <span class="sc">&#39;*&#39;</span><span class="p">},</span>
+  <span class="p">{</span><span class="sc">&#39;2&#39;</span><span class="p">,</span> <span class="sc">&#39;5&#39;</span><span class="p">,</span> <span class="sc">&#39;8&#39;</span><span class="p">,</span> <span class="sc">&#39;0&#39;</span><span class="p">},</span>
+  <span class="p">{</span><span class="sc">&#39;3&#39;</span><span class="p">,</span> <span class="sc">&#39;6&#39;</span><span class="p">,</span> <span class="sc">&#39;9&#39;</span><span class="p">,</span> <span class="sc">&#39;#&#39;</span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="cp">#define KEY_PRESSED() (!C0 || !C1 || !C2 || !C3)   </span><span class="c1">//any low</span>
+<span class="cp">#define KEY_RELEASED() (C0 &amp;&amp; C1 &amp;&amp; C2 &amp;&amp; C3)  </span><span class="c1">//all high</span>
+
+<span class="kt">uint8_t</span> <span class="nf">doKeyScan</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">uint8_t</span> <span class="n">u8_row</span><span class="p">,</span> <span class="n">u8_col</span><span class="p">;</span>
+  <span class="c1">//determine column</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">C0</span><span class="p">)</span> <span class="n">u8_col</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">C1</span><span class="p">)</span> <span class="n">u8_col</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">C2</span><span class="p">)</span> <span class="n">u8_col</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+  <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">C3</span><span class="p">)</span> <span class="n">u8_col</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+  <span class="k">else</span> <span class="k">return</span><span class="p">(</span><span class="sc">&#39;E&#39;</span><span class="p">);</span> <span class="c1">//error</span>
+  <span class="c1">//determine row</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u8_row</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">u8_row</span> <span class="o">&lt;</span> <span class="n">NUM_ROWS</span><span class="p">;</span> <span class="n">u8_row</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">setOneRowLow</span><span class="p">(</span><span class="n">u8_row</span><span class="p">);</span> <span class="c1">//enable one row low</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">KEY_PRESSED</span><span class="p">())</span> <span class="p">{</span>
+      <span class="n">DRIVE_ROW_LOW</span><span class="p">();</span> <span class="c1">//return rows to driving low</span>
+      <span class="k">return</span><span class="p">(</span><span class="n">au8_keyTable</span><span class="p">[</span><span class="n">u8_row</span><span class="p">][</span><span class="n">u8_col</span><span class="p">]);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="n">DRIVE_ROW_LOW</span><span class="p">();</span> <span class="c1">//return rows to driving low</span>
+  <span class="k">return</span><span class="p">(</span><span class="sc">&#39;E&#39;</span><span class="p">);</span> <span class="c1">//error</span>
+<span class="p">}</span>
+
+
+<span class="k">typedef</span> <span class="k">enum</span>  <span class="p">{</span>
+  <span class="n">STATE_WAIT_FOR_PRESS</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+  <span class="n">STATE_WAIT_FOR_PRESS2</span><span class="p">,</span>
+  <span class="n">STATE_WAIT_FOR_RELEASE</span><span class="p">,</span>
+<span class="p">}</span> <span class="n">ISRSTATE</span><span class="p">;</span>
+
+<span class="n">ISRSTATE</span> <span class="n">e_isrState</span> <span class="o">=</span> <span class="n">STATE_WAIT_FOR_PRESS</span><span class="p">;</span>
+<span class="k">volatile</span> <span class="kt">uint8_t</span> <span class="n">u8_newKey</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+<span class="c1">//Interrupt Service Routine for Timer3</span>
+<span class="kt">void</span> <span class="n">_ISR</span> <span class="nf">_T3Interrupt</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">switch</span> <span class="p">(</span><span class="n">e_isrState</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">case</span> <span class="n">STATE_WAIT_FOR_PRESS</span>:
+      <span class="k">if</span> <span class="p">(</span><span class="n">KEY_PRESSED</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">u8_newKey</span> <span class="o">==</span> <span class="mi">0</span><span class="p">))</span> <span class="p">{</span>
+        <span class="c1">//ensure that key is sampled low for two consecutive interrupt periods</span>
+        <span class="n">e_isrState</span> <span class="o">=</span> <span class="n">STATE_WAIT_FOR_PRESS2</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="n">STATE_WAIT_FOR_PRESS2</span>:
+      <span class="k">if</span> <span class="p">(</span><span class="n">KEY_PRESSED</span><span class="p">())</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>a key is ready</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+        <span class="n">u8_newKey</span> <span class="o">=</span> <span class="n">doKeyScan</span><span class="p">();</span>
+        <span class="n">e_isrState</span> <span class="o">=</span> <span class="n">STATE_WAIT_FOR_RELEASE</span><span class="p">;</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="n">e_isrState</span> <span class="o">=</span> <span class="n">STATE_WAIT_FOR_PRESS</span><span class="p">;</span>
+      <span class="k">break</span><span class="p">;</span>
+
+    <span class="k">case</span> <span class="n">STATE_WAIT_FOR_RELEASE</span>:
+      <span class="c1">//keypad released</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">KEY_RELEASED</span><span class="p">())</span> <span class="p">{</span>
+        <span class="n">e_isrState</span> <span class="o">=</span> <span class="n">STATE_WAIT_FOR_PRESS</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">break</span><span class="p">;</span>
+    <span class="nl">default:</span>
+      <span class="n">e_isrState</span> <span class="o">=</span> <span class="n">STATE_WAIT_FOR_PRESS</span><span class="p">;</span>
+      <span class="k">break</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="n">_T3IF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>                 <span class="c1">//clear the timer interrupt bit</span>
+<span class="p">}</span>
+
+<span class="cp">#define ISR_PERIOD     15      </span><span class="c1">// in ms</span>
+
+<span class="kt">void</span>  <span class="n">configTimer3</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c1">//ensure that Timer2,3 configured as separate timers.</span>
+  <span class="n">T2CONbits</span><span class="p">.</span><span class="n">T32</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>     <span class="c1">// 32-bit mode off</span>
+  <span class="c1">//T3CON set like this for documentation purposes.</span>
+  <span class="c1">//could be replaced by T3CON = 0x0020</span>
+  <span class="n">T3CON</span> <span class="o">=</span> <span class="n">T3_OFF</span> <span class="o">|</span> <span class="n">T3_IDLE_CON</span> <span class="o">|</span> <span class="n">T3_GATE_OFF</span>
+          <span class="o">|</span> <span class="n">T3_SOURCE_INT</span>
+          <span class="o">|</span> <span class="n">T3_PS_1_64</span> <span class="p">;</span>  <span class="c1">//results in T3CON= 0x0020</span>
+  <span class="n">PR3</span> <span class="o">=</span> <span class="n">msToU16Ticks</span> <span class="p">(</span><span class="n">ISR_PERIOD</span><span class="p">,</span> <span class="n">getTimerPrescale</span><span class="p">(</span><span class="n">T3CONbits</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="n">TMR3</span>  <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>                       <span class="c1">//clear timer3 value</span>
+  <span class="n">_T3IF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>                       <span class="c1">//clear interrupt flag</span>
+  <span class="n">_T3IP</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>                       <span class="c1">//choose a priority</span>
+  <span class="n">_T3IE</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>                       <span class="c1">//enable the interrupt</span>
+  <span class="n">T3CONbits</span><span class="p">.</span><span class="n">TON</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>               <span class="c1">//turn on the timer</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="n">main</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">configBasic</span><span class="p">(</span><span class="n">HELLO_MSG</span><span class="p">);</span>
+  <span class="cm">/** PIO config ******/</span>
+  <span class="n">configKeypad</span><span class="p">();</span>
+  <span class="cm">/** Configure the Timer */</span>
+  <span class="n">configTimer3</span><span class="p">();</span>
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">u8_newKey</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">outChar</span><span class="p">(</span><span class="n">u8_newKey</span><span class="p">);</span>
+      <span class="n">u8_newKey</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">doHeartbeat</span><span class="p">();</span>     <span class="c1">//ensure that we are alive</span>
+  <span class="p">}</span> <span class="c1">// end while (1)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="rot_enc_trace.c.html" title="rot_enc_trace.c - Demonstrates use of an ISR trace buffer for capturing the states of a rotary encoder."
+             >next</a> |</li>
+        <li class="right" >
+          <a href="rot_enc.c.html" title="rot_enc.c - A 2-bit incremental Gray code rotary encoder example"
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

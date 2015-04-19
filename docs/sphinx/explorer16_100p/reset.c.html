@@ -1,0 +1,228 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>reset.c - Demonstrates software reset, idle, sleep, watchdog timer operation &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="lcd4bit.c - Character LCD interface example" href="lcd4bit.c.html" />
+    <link rel="prev" title="app_mailD.c" href="../chap14/app_mailD.c.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="lcd4bit.c.html" title="lcd4bit.c - Character LCD interface example"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../chap14/app_mailD.c.html" title="app_mailD.c"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="reset-c-demonstrates-software-reset-idle-sleep-watchdog-timer-operation">
+<h1>reset.c - Demonstrates software reset, idle, sleep, watchdog timer operation<a class="headerlink" href="#reset-c-demonstrates-software-reset-idle-sleep-watchdog-timer-operation" title="Permalink to this headline">¶</a></h1>
+<p>Program that tests some of the ways that a PIC24 can
+be reset, as well as sleep mode, idle mode, and the watchdog timer.
+Intended to be used in a laboratory exercise in which the current
+draw of the processor is monitored before/after the power down
+modes.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+
+<span class="cp">#include &quot;pic24_all.h&quot;</span>
+
+<span class="cm">/** This function puts the PIC24 in low-power mode by:</span>
+<span class="cm"> *  - Configuring all digital I/O pins as inputs</span>
+<span class="cm"> *  - Configuring all analog I/O pins shared with</span>
+<span class="cm"> *    digital I/O pins to be digital only</span>
+<span class="cm"> *  - Enables pullups on all pins not used by the</span>
+<span class="cm"> *    oscillator.</span>
+<span class="cm"> *</span>
+<span class="cm"> * WARNING: if pullups are enabled on pins used by</span>
+<span class="cm"> * the oscillator, the clock typically stops running.</span>
+<span class="cm"> * Currently, this code works for demo purposes with</span>
+<span class="cm"> * the FRC oscillator when used in the reset.c program.</span>
+<span class="cm"> */</span>
+<span class="c1">//this function is processor specific</span>
+<span class="cp">#if (defined(__PIC24HJ32GP202__))</span>
+<span class="kt">void</span> <span class="nf">configPinsForLowPower</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Configure all digital I/O pins for input.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">TRISB</span> <span class="o">=</span> <span class="mh">0xFFFF</span><span class="p">;</span>
+  <span class="n">TRISA</span> <span class="o">=</span> <span class="mh">0xFFFF</span><span class="p">;</span>
+  <span class="n">AD1PCFGL</span> <span class="o">=</span> <span class="mh">0xFFFF</span><span class="p">;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>The primary oscillator is not used, so
+turn on all the pull-ups.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">CNPU2</span> <span class="o">=</span> <span class="mh">0xFFFF</span><span class="p">;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>The secondary osciallator is not used, so
+turn on all the pull-ups.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">CNPU1</span> <span class="o">=</span> <span class="mh">0xFFFF</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="cp">#else</span>
+<span class="cp"># warning &quot;Using dummy function for configPinsForLowPower() in common/pic24_util.c.&quot;</span>
+<span class="kt">void</span> <span class="n">configPinsForLowPower</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+<span class="p">}</span>
+<span class="cp">#endif</span>
+
+
+<span class="kt">uint8_t</span> <span class="n">printMenuGetChoice</span><span class="p">()</span> <span class="p">{</span>
+  <span class="kt">uint8_t</span> <span class="n">u8_c</span><span class="p">;</span>
+  <span class="n">outString</span><span class="p">(</span><span class="s">&quot;&#39;1&#39; enable watchdog timer</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="n">outString</span><span class="p">(</span><span class="s">&quot;&#39;2&#39; enter sleep mode</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="n">outString</span><span class="p">(</span><span class="s">&quot;&#39;3&#39; enter idle mode</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="n">outString</span><span class="p">(</span><span class="s">&quot;&#39;4&#39; enable watchdog timer and enter sleep mode</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="n">outString</span><span class="p">(</span><span class="s">&quot;&#39;5&#39; doze = divide by 2</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="n">outString</span><span class="p">(</span><span class="s">&quot;&#39;6&#39; doze = divide by 128</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="n">outString</span><span class="p">(</span><span class="s">&quot;&#39;7&#39; execute reset instruction</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="n">outString</span><span class="p">(</span><span class="s">&quot;Choice: &quot;</span><span class="p">);</span>
+  <span class="n">u8_c</span> <span class="o">=</span> <span class="n">inChar</span><span class="p">();</span>
+  <span class="n">outChar</span><span class="p">(</span><span class="n">u8_c</span><span class="p">);</span>      <span class="c1">//echo character</span>
+  <span class="n">outString</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>      <span class="c1">//newline</span>
+  <span class="k">return</span><span class="p">(</span><span class="n">u8_c</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">//persistent variables are not touched at reset</span>
+<span class="n">_PERSISTENT</span> <span class="kt">uint8_t</span> <span class="n">u8_resetCount</span><span class="p">;</span>
+
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+
+  <span class="n">configClock</span><span class="p">();</span>                <span class="c1">//clock configuration</span>
+  <span class="n">configPinsForLowPower</span><span class="p">();</span>      <span class="c1">//config pins for low power since we are measuring current</span>
+  <span class="n">configHeartbeat</span><span class="p">();</span>            <span class="c1">//heartbeat LED</span>
+  <span class="n">configDefaultUART</span><span class="p">(</span><span class="n">DEFAULT_BAUDRATE</span><span class="p">);</span> <span class="c1">//serial port config</span>
+  <span class="n">outString</span><span class="p">(</span><span class="n">HELLO_MSG</span><span class="p">);</span>         <span class="c1">//say Hello!</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="n">_POR</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">u8_resetCount</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>      <span class="c1">// if power on reset, init the reset count variable</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="n">u8_resetCount</span><span class="o">++</span><span class="p">;</span>        <span class="c1">//keep track of the number of non-power on resets</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">_WDTO</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">_SWDTEN</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>            <span class="c1">//If Watchdog timeout, disable WDT.</span>
+  <span class="p">}</span>
+  <span class="n">printResetCause</span><span class="p">();</span>        <span class="c1">//print statement about what caused reset</span>
+  <span class="c1">//print the reset count</span>
+  <span class="n">outString</span><span class="p">(</span><span class="s">&quot;The reset count is &quot;</span><span class="p">);</span>
+  <span class="n">outUint8</span><span class="p">(</span><span class="n">u8_resetCount</span><span class="p">);</span>
+  <span class="n">outString</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">uint8_t</span> <span class="n">u8_c</span><span class="p">;</span>
+    <span class="n">u8_c</span> <span class="o">=</span> <span class="n">printMenuGetChoice</span><span class="p">();</span>
+    <span class="n">DELAY_MS</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>  <span class="c1">//let characters clear the UART before executing choice</span>
+    <span class="k">switch</span> <span class="p">(</span><span class="n">u8_c</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">case</span> <span class="sc">&#39;1&#39;</span>:         <span class="c1">//enable watchdog timer</span>
+        <span class="n">_SWDTEN</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>    <span class="c1">//WDT ENable bit = 1</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="sc">&#39;2&#39;</span>:         <span class="c1">//sleep mode</span>
+        <span class="n">asm</span><span class="p">(</span><span class="s">&quot;pwrsav #0&quot;</span><span class="p">);</span>  <span class="c1">//sleep</span>
+        <span class="n">outString</span><span class="p">(</span><span class="s">&quot;after sleep</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>   <span class="c1">//never executed.</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="sc">&#39;3&#39;</span>:         <span class="c1">//idle mode</span>
+        <span class="n">asm</span><span class="p">(</span><span class="s">&quot;pwrsav #1&quot;</span><span class="p">);</span> <span class="c1">//idle</span>
+        <span class="n">outString</span><span class="p">(</span><span class="s">&quot;after idle</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>   <span class="c1">//never executed.</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="sc">&#39;4&#39;</span>:
+        <span class="n">_SWDTEN</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>     <span class="c1">//WDT ENable bit = 1</span>
+        <span class="n">asm</span><span class="p">(</span><span class="s">&quot;pwrsav #0&quot;</span><span class="p">);</span> <span class="c1">//sleep</span>
+        <span class="n">outString</span><span class="p">(</span><span class="s">&quot;after WDT enable, sleep.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span> <span class="c1">//executed on wakeup</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="sc">&#39;5&#39;</span>:
+        <span class="n">_DOZE</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="c1">//chose divide by 2</span>
+        <span class="n">_DOZEN</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="c1">//enable doze mode</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="sc">&#39;6&#39;</span>:
+        <span class="n">_DOZE</span> <span class="o">=</span> <span class="mi">7</span><span class="p">;</span> <span class="c1">//chose divide by 128</span>
+        <span class="n">_DOZEN</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="c1">//enable doze mode</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="sc">&#39;7&#39;</span>:
+        <span class="n">asm</span><span class="p">(</span><span class="s">&quot;reset&quot;</span><span class="p">);</span> <span class="c1">//reset myself</span>
+        <span class="k">break</span><span class="p">;</span>
+
+      <span class="nl">default:</span>
+        <span class="k">break</span><span class="p">;</span>  <span class="c1">//ignore</span>
+    <span class="p">}</span>
+
+  <span class="p">}</span> <span class="c1">// end while (1)</span>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="lcd4bit.c.html" title="lcd4bit.c - Character LCD interface example"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../chap14/app_mailD.c.html" title="app_mailD.c"
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,1727 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>unitTest.c - Implements unit tests for the PIC comm protocol &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Utilities" href="../utilities.html" />
+    <link rel="next" title="unittest_rounding.c - Unit tests of the round functions" href="unittest_rounding.c.html" />
+    <link rel="prev" title="test_ports.c - Test the GPIO configuration macros in includepic24_ports_config.h" href="test_ports.X/test_ports.c.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="unittest_rounding.c.html" title="unittest_rounding.c - Unit tests of the round functions"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="test_ports.X/test_ports.c.html" title="test_ports.c - Test the GPIO configuration macros in includepic24_ports_config.h"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../utilities.html" accesskey="U">Utilities</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="unittest-c-implements-unit-tests-for-the-pic-comm-protocol">
+<h1>unitTest.c - Implements unit tests for the PIC comm protocol<a class="headerlink" href="#unittest-c-implements-unit-tests-for-the-pic-comm-protocol" title="Permalink to this headline">¶</a></h1>
+<p>A very simple test runner, runAllTests(), executes the
+tests. ASSERT statements provide verification.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+
+<span class="cp">#include &quot;dataXfer.h&quot;</span>
+<span class="cp">#include &lt;string.h&gt;</span>
+<span class="cp">#include &lt;stdio.h&gt;</span>
+
+</pre></div>
+</div>
+<div class="section" id="tests-for-the-command-finding-state-machine">
+<h2>Tests for the command-finding state machine<a class="headerlink" href="#tests-for-the-command-finding-state-machine" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c"><div class="highlight"><pre>
+
+</pre></div>
+</div>
+<p>Run all normal chars through the machine</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">findChar</span><span class="p">()</span> <span class="p">{</span>
+  <span class="kt">char</span> <span class="n">c_in</span><span class="p">,</span> <span class="n">c_out</span><span class="p">;</span>
+
+  <span class="k">for</span> <span class="p">(</span><span class="n">c_in</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">c_in</span> <span class="o">&lt;</span> <span class="n">ESCAPED_CMD</span><span class="p">;</span> <span class="n">c_in</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">CMD_OUTPUT</span> <span class="n">cmdOutput</span> <span class="o">=</span> <span class="n">stepCommandFindMachine</span><span class="p">(</span><span class="n">c_in</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c_out</span><span class="p">);</span>
+    <span class="n">ASSERT</span><span class="p">(</span><span class="n">cmdOutput</span> <span class="o">==</span> <span class="n">OUTPUT_CMD_CHAR</span><span class="p">);</span>
+    <span class="n">ASSERT</span><span class="p">(</span><span class="n">c_in</span> <span class="o">==</span> <span class="n">c_out</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">c_in</span> <span class="o">=</span> <span class="n">ESCAPED_CMD</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span> <span class="n">c_in</span> <span class="o">&lt;=</span> <span class="p">((</span><span class="kt">char</span><span class="p">)</span> <span class="mh">0xFF</span><span class="p">);</span> <span class="n">c_in</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">CMD_OUTPUT</span> <span class="n">cmdOutput</span> <span class="o">=</span> <span class="n">stepCommandFindMachine</span><span class="p">(</span><span class="n">c_in</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c_out</span><span class="p">);</span>
+    <span class="n">ASSERT</span><span class="p">(</span><span class="n">cmdOutput</span> <span class="o">==</span> <span class="n">OUTPUT_CMD_CHAR</span><span class="p">);</span>
+    <span class="n">ASSERT</span><span class="p">(</span><span class="n">c_in</span> <span class="o">==</span> <span class="n">c_out</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Run an escaped command through the machine.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">findEscapedCommandChar</span><span class="p">()</span> <span class="p">{</span>
+  <span class="kt">char</span> <span class="n">c_out</span><span class="p">;</span>
+
+  <span class="n">CMD_OUTPUT</span> <span class="n">cmdOutput</span> <span class="o">=</span> <span class="n">stepCommandFindMachine</span><span class="p">(</span><span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c_out</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">cmdOutput</span> <span class="o">==</span> <span class="n">OUTPUT_CMD_NONE</span><span class="p">);</span>
+  <span class="n">cmdOutput</span> <span class="o">=</span> <span class="n">stepCommandFindMachine</span><span class="p">(</span><span class="n">ESCAPED_CMD</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c_out</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">cmdOutput</span> <span class="o">==</span> <span class="n">OUTPUT_CMD_CHAR</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">c_out</span> <span class="o">==</span> <span class="n">CMD_TOKEN</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Look for all the normal (unescaped) commands.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">findCommand</span><span class="p">()</span> <span class="p">{</span>
+  <span class="kt">char</span> <span class="n">c_in</span><span class="p">,</span> <span class="n">c_out</span><span class="p">;</span>
+
+  <span class="k">for</span> <span class="p">(</span><span class="n">c_in</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">c_in</span> <span class="o">&lt;</span> <span class="n">ESCAPED_CMD</span><span class="p">;</span> <span class="n">c_in</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">CMD_OUTPUT</span> <span class="n">cmdOutput</span> <span class="o">=</span> <span class="n">stepCommandFindMachine</span><span class="p">(</span><span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c_out</span><span class="p">);</span>
+    <span class="n">ASSERT</span><span class="p">(</span><span class="n">cmdOutput</span> <span class="o">==</span> <span class="n">OUTPUT_CMD_NONE</span><span class="p">);</span>
+    <span class="n">cmdOutput</span> <span class="o">=</span> <span class="n">stepCommandFindMachine</span><span class="p">(</span><span class="n">c_in</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c_out</span><span class="p">);</span>
+    <span class="n">ASSERT</span><span class="p">(</span><span class="n">cmdOutput</span> <span class="o">==</span> <span class="n">OUTPUT_CMD_CMD</span><span class="p">);</span>
+    <span class="n">ASSERT</span><span class="p">(</span><span class="n">c_in</span> <span class="o">==</span> <span class="n">c_out</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">c_in</span> <span class="o">=</span> <span class="n">ESCAPED_CMD</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span> <span class="n">c_in</span> <span class="o">&lt;=</span> <span class="p">((</span><span class="kt">char</span><span class="p">)</span> <span class="mh">0xFF</span><span class="p">);</span> <span class="n">c_in</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">CMD_OUTPUT</span> <span class="n">cmdOutput</span> <span class="o">=</span> <span class="n">stepCommandFindMachine</span><span class="p">(</span><span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c_out</span><span class="p">);</span>
+    <span class="n">ASSERT</span><span class="p">(</span><span class="n">cmdOutput</span> <span class="o">==</span> <span class="n">OUTPUT_CMD_NONE</span><span class="p">);</span>
+    <span class="n">cmdOutput</span> <span class="o">=</span> <span class="n">stepCommandFindMachine</span><span class="p">(</span><span class="n">c_in</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c_out</span><span class="p">);</span>
+    <span class="n">ASSERT</span><span class="p">(</span><span class="n">cmdOutput</span> <span class="o">==</span> <span class="n">OUTPUT_CMD_CMD</span><span class="p">);</span>
+    <span class="n">ASSERT</span><span class="p">(</span><span class="n">c_in</span> <span class="o">==</span> <span class="n">c_out</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Run an escaped command through the machine</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">findEscapedCommand</span><span class="p">()</span> <span class="p">{</span>
+  <span class="kt">char</span> <span class="n">c_out</span><span class="p">;</span>
+
+  <span class="n">CMD_OUTPUT</span> <span class="n">cmdOutput</span> <span class="o">=</span> <span class="n">stepCommandFindMachine</span><span class="p">(</span><span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c_out</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">cmdOutput</span> <span class="o">==</span> <span class="n">OUTPUT_CMD_NONE</span><span class="p">);</span>
+  <span class="n">cmdOutput</span> <span class="o">=</span> <span class="n">stepCommandFindMachine</span><span class="p">(</span><span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c_out</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">cmdOutput</span> <span class="o">==</span> <span class="n">OUTPUT_CMD_NONE</span><span class="p">);</span>
+  <span class="n">cmdOutput</span> <span class="o">=</span> <span class="n">stepCommandFindMachine</span><span class="p">(</span><span class="n">ESCAPED_CMD</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c_out</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">cmdOutput</span> <span class="o">==</span> <span class="n">OUTPUT_CMD_CMD</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">c_out</span> <span class="o">==</span> <span class="n">CMD_TOKEN</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Verify that the sequence CMD_TOKEN CMD_TOKEN CMD_TOKEN is recognized
+as a repeated wait.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">findRepeatedWait</span><span class="p">()</span> <span class="p">{</span>
+  <span class="kt">char</span> <span class="n">c_out</span><span class="p">;</span>
+
+  <span class="n">CMD_OUTPUT</span> <span class="n">cmdOutput</span> <span class="o">=</span> <span class="n">stepCommandFindMachine</span><span class="p">(</span><span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c_out</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">cmdOutput</span> <span class="o">==</span> <span class="n">OUTPUT_CMD_NONE</span><span class="p">);</span>
+  <span class="n">cmdOutput</span> <span class="o">=</span> <span class="n">stepCommandFindMachine</span><span class="p">(</span><span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c_out</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">cmdOutput</span> <span class="o">==</span> <span class="n">OUTPUT_CMD_NONE</span><span class="p">);</span>
+  <span class="n">cmdOutput</span> <span class="o">=</span> <span class="n">stepCommandFindMachine</span><span class="p">(</span><span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c_out</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">cmdOutput</span> <span class="o">==</span> <span class="n">OUTPUT_CMD_REPEATED_WAIT</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p><strong>todo</strong>: Cases still to unit test:</p>
+<ul class="simple">
+<li>(repeated wait)</li>
+<li>CMD_TOKEN CMD_TOKEN c (repeated command)</li>
+</ul>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">findRepeatedCommand</span><span class="p">()</span> <span class="p">{</span>
+  <span class="kt">char</span> <span class="n">c_out</span><span class="p">;</span>
+
+  <span class="n">CMD_OUTPUT</span> <span class="n">cmdOutput</span> <span class="o">=</span> <span class="n">stepCommandFindMachine</span><span class="p">(</span><span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c_out</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">cmdOutput</span> <span class="o">==</span> <span class="n">OUTPUT_CMD_NONE</span><span class="p">);</span>
+  <span class="n">cmdOutput</span> <span class="o">=</span> <span class="n">stepCommandFindMachine</span><span class="p">(</span><span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c_out</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">cmdOutput</span> <span class="o">==</span> <span class="n">OUTPUT_CMD_NONE</span><span class="p">);</span>
+  <span class="n">cmdOutput</span> <span class="o">=</span> <span class="n">stepCommandFindMachine</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c_out</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">cmdOutput</span> <span class="o">==</span> <span class="n">OUTPUT_CMD_REPEATED_CMD</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">c_out</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+
+
+</pre></div>
+</div>
+</div>
+<div class="section" id="tests-for-the-receive-state-machine">
+<h2>Tests for the receive state machine<a class="headerlink" href="#tests-for-the-receive-state-machine" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c"><div class="highlight"><pre>
+
+<span class="kt">void</span> <span class="nf">sendData</span><span class="p">(</span><span class="kt">uint8_t</span><span class="o">*</span> <span class="n">pu8_data</span><span class="p">,</span> <span class="n">uint</span> <span class="n">u_len</span><span class="p">);</span>
+
+
+</pre></div>
+</div>
+<p>Sending a normal char shold report that char received.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="n">sendOneNormalChar</span><span class="p">(</span>
+</pre></div>
+</div>
+<p>The character to send. This character will NOT
+be esacaped &#8211; an 0x55 will be sent as just an
+0x55.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">char</span> <span class="n">c_charToSend</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">stepReceiveMachine</span><span class="p">(</span><span class="n">c_charToSend</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">isReceiveMachineChar</span><span class="p">());</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">getReceiveMachineOutChar</span><span class="p">()</span> <span class="o">==</span> <span class="n">c_charToSend</span><span class="p">);</span>
+<span class="p">};</span>
+
+
+</pre></div>
+</div>
+<p>Sending a letter should report that letter received</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendLetter</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">sendOneNormalChar</span><span class="p">(</span><span class="sc">&#39;c&#39;</span><span class="p">);</span>
+<span class="p">}</span>
+
+
+</pre></div>
+</div>
+<p>Sending the char 0x00 shold report that char receivd</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">send0x00</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">sendOneNormalChar</span><span class="p">(</span><span class="mh">0x00</span><span class="p">);</span>
+<span class="p">}</span>
+
+
+</pre></div>
+</div>
+<p>Sending the char 0xFF shold report that char receivd</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">send0xFF</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">sendOneNormalChar</span><span class="p">((</span><span class="kt">char</span><span class="p">)</span> <span class="mh">0xFF</span><span class="p">);</span>
+<span class="p">}</span>
+
+
+</pre></div>
+</div>
+<p>Check sending an escaped command</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendEscapedCommand</span><span class="p">()</span> <span class="p">{</span>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="n">ESCAPED_CMD</span> <span class="p">};</span>
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="mi">2</span><span class="p">);</span>
+
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">isReceiveMachineChar</span><span class="p">());</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">getReceiveMachineOutChar</span><span class="p">()</span> <span class="o">==</span> <span class="n">CMD_TOKEN</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Set up the xferData structure for receiving
+some data.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="n">setupXferData</span><span class="p">(</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Index of data to be received</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">uint</span> <span class="n">u_index</span><span class="p">,</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Length (in bytes) of data to be received</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">uint</span> <span class="n">u_len</span><span class="p">)</span> <span class="p">{</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>A place to store the max amount of data.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="k">static</span> <span class="kt">uint8_t</span> <span class="n">au_data</span><span class="p">[</span><span class="mi">256</span><span class="p">];</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Check params</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">u_index</span> <span class="o">&lt;</span> <span class="n">NUM_XFER_VARS</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">u_len</span> <span class="o">&lt;=</span> <span class="mi">256</span><span class="p">);</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Set up structure</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">xferVar</span><span class="p">[</span><span class="n">u_index</span><span class="p">].</span><span class="n">u8_size</span> <span class="o">=</span> <span class="n">u_len</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>  <span class="c1">// Value is length-1</span>
+  <span class="n">xferVar</span><span class="p">[</span><span class="n">u_index</span><span class="p">].</span><span class="n">pu8_data</span> <span class="o">=</span> <span class="n">au_data</span><span class="p">;</span>
+  <span class="n">assignBit</span><span class="p">(</span><span class="n">u_index</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Check sending a one-byte piece of data
+0x00 == 000000 00 : index 0, length 0 (1 byte)</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendOneByteData</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Set up index 0 for 1 byte of data</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">setupXferData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="mh">0x00</span><span class="p">,</span> <span class="mh">0x12</span> <span class="p">};</span>
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="mi">3</span><span class="p">);</span>
+
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">isReceiveMachineData</span><span class="p">());</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">getReceiveMachineIndex</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">pu8_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">au8_data</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
+<span class="p">}</span>
+
+
+</pre></div>
+</div>
+<p>Check sending a four-byte piece of data</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendFourBytesData</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">setupXferData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>0x03: index 0, length 3 (4 bytes); following are data bytes</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="mh">0x03</span><span class="p">,</span> <span class="mh">0x00</span><span class="p">,</span> <span class="mh">0x01</span><span class="p">,</span> <span class="mh">0x02</span><span class="p">,</span> <span class="mh">0x03</span> <span class="p">};</span>
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="mi">6</span><span class="p">);</span>
+
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">isReceiveMachineData</span><span class="p">());</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">getReceiveMachineIndex</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">uint</span> <span class="n">i</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">pu8_data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">i</span><span class="p">);</span>
+<span class="p">}</span>
+
+
+</pre></div>
+</div>
+<p>Check sending a four-byte piece of data which
+contains four CMD_TOKEN bytes.
+0x00 == 000000 11 : index 0, length 3 (4 bytes)</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendFourBytesCmdTokenData</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">setupXferData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>0x03: index 0, length 3; following are data bytes</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="mh">0x03</span><span class="p">,</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="n">ESCAPED_CMD</span><span class="p">,</span>
+                         <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="n">ESCAPED_CMD</span><span class="p">,</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="n">ESCAPED_CMD</span><span class="p">,</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="n">ESCAPED_CMD</span>
+                       <span class="p">};</span>
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
+
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">isReceiveMachineData</span><span class="p">());</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">getReceiveMachineIndex</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">uint</span> <span class="n">i</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">pu8_data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="p">((</span><span class="kt">uint8_t</span><span class="p">)</span> <span class="n">CMD_TOKEN</span><span class="p">));</span>
+<span class="p">}</span>
+
+
+</pre></div>
+</div>
+<p>Send a repeated command and make sure both an error is reported
+and data can be received (error recovery works).</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendRepeatedCommand</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>0x00: index 0, length 1.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="mh">0x00</span><span class="p">,</span> <span class="mh">0xFF</span> <span class="p">};</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Send first three bytes and check for repeated command.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">setupXferData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="mi">2</span><span class="p">);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Send third byte manually, since it reports an error</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">stepReceiveMachine</span><span class="p">(</span><span class="n">au8_data</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">getReceiveMachineError</span><span class="p">()</span> <span class="o">==</span> <span class="n">ERR_REPEATED_CMD</span><span class="p">);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Send last byte</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">sendData</span><span class="p">(</span><span class="o">&amp;</span><span class="n">au8_data</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="mi">1</span><span class="p">);</span>
+
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">isReceiveMachineData</span><span class="p">());</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">getReceiveMachineIndex</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">pu8_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">au8_data</span><span class="p">[</span><span class="mi">3</span><span class="p">]);</span>
+<span class="p">}</span>
+
+
+</pre></div>
+</div>
+<p>Send a command of CMD_TOKEN</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendCommandCmdToken</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Set up and send command</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">uint</span> <span class="n">u_index</span> <span class="o">=</span> <span class="n">getVarIndex</span><span class="p">(</span><span class="n">CMD_TOKEN</span><span class="p">);</span>
+  <span class="n">uint</span> <span class="n">u_len</span> <span class="o">=</span> <span class="n">getVarLength</span><span class="p">(</span><span class="n">CMD_TOKEN</span><span class="p">);</span>
+  <span class="n">setupXferData</span><span class="p">(</span><span class="n">u_index</span><span class="p">,</span> <span class="n">u_len</span><span class="p">);</span>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="n">ESCAPED_CMD</span> <span class="p">};</span>
+  <span class="n">uint</span> <span class="n">u</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">u</span> <span class="o">&lt;</span> <span class="n">u_len</span><span class="p">;</span> <span class="n">u</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">au8_data</span><span class="p">[</span><span class="n">u</span> <span class="o">+</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">u</span><span class="p">;</span>
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="mi">3</span> <span class="o">+</span> <span class="n">u_len</span><span class="p">);</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Check received data</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">isReceiveMachineData</span><span class="p">());</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">getReceiveMachineIndex</span><span class="p">()</span> <span class="o">==</span> <span class="n">u_index</span><span class="p">);</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">u</span> <span class="o">&lt;</span> <span class="n">u_len</span><span class="p">;</span> <span class="n">u</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="n">u_index</span><span class="p">].</span><span class="n">pu8_data</span><span class="p">[</span><span class="n">u</span><span class="p">]</span> <span class="o">==</span> <span class="n">u</span><span class="p">);</span>
+<span class="p">}</span>
+
+
+</pre></div>
+</div>
+<p>Send a repeated command followed by a command of CMD_TOKEN</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendRepeatedCommandCmdToken</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Set up and send command</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">uint</span> <span class="n">u_index</span> <span class="o">=</span> <span class="n">getVarIndex</span><span class="p">(</span><span class="n">CMD_TOKEN</span><span class="p">);</span>
+  <span class="n">uint</span> <span class="n">u_len</span> <span class="o">=</span> <span class="n">getVarLength</span><span class="p">(</span><span class="n">CMD_TOKEN</span><span class="p">);</span>
+  <span class="n">setupXferData</span><span class="p">(</span><span class="n">u_index</span><span class="p">,</span> <span class="n">u_len</span><span class="p">);</span>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="n">ESCAPED_CMD</span> <span class="p">};</span>
+  <span class="n">uint</span> <span class="n">u</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">u</span> <span class="o">&lt;</span> <span class="n">u_len</span><span class="p">;</span> <span class="n">u</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">au8_data</span><span class="p">[</span><span class="n">u</span> <span class="o">+</span> <span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">u</span><span class="p">;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Send first two bytes (no error yet)</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="mi">2</span><span class="p">);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Send 3rd command (should be a repeated command error)</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">stepReceiveMachine</span><span class="p">(</span><span class="n">au8_data</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">getReceiveMachineError</span><span class="p">()</span> <span class="o">==</span> <span class="n">ERR_REPEATED_CMD</span><span class="p">);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Send remaining data (ESCAPED_CMD followed by u_len data bytes)</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">sendData</span><span class="p">(</span><span class="o">&amp;</span><span class="n">au8_data</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">u_len</span><span class="p">);</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Check received data</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">isReceiveMachineData</span><span class="p">());</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">getReceiveMachineIndex</span><span class="p">()</span> <span class="o">==</span> <span class="n">u_index</span><span class="p">);</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">u</span> <span class="o">&lt;</span> <span class="n">u_len</span><span class="p">;</span> <span class="n">u</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="n">u_index</span><span class="p">].</span><span class="n">pu8_data</span><span class="p">[</span><span class="n">u</span><span class="p">]</span> <span class="o">==</span> <span class="n">u</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Test timeout detection.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendWithTimeout</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">setupXferData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>0x03: index 0, length 3 (4 bytes); following are data bytes</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="mh">0x03</span><span class="p">,</span> <span class="mh">0x00</span><span class="p">,</span> <span class="mh">0x01</span><span class="p">,</span> <span class="mh">0x02</span><span class="p">,</span> <span class="mh">0x03</span> <span class="p">};</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Create a timeout at each point in the transmission of the data</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">uint</span> <span class="n">u</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">u</span> <span class="o">&lt;</span> <span class="mi">6</span><span class="p">;</span> <span class="n">u</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Start fresh each time</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+    <span class="n">resetReceiveMachine</span><span class="p">();</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Send u-1 bytes with no timeout</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+    <span class="k">if</span> <span class="p">(</span><span class="n">u</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+      <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="n">u</span><span class="p">);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Send the final byte with a timeout</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+    <span class="n">notifyOfTimeout</span><span class="p">();</span>
+    <span class="n">RECEIVE_ERROR</span> <span class="n">re</span> <span class="o">=</span> <span class="n">stepReceiveMachine</span><span class="p">(</span><span class="n">au8_data</span><span class="p">[</span><span class="n">u</span><span class="p">]);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Except for the first byte, make sure a timeout is reported</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+    <span class="k">if</span> <span class="p">(</span><span class="n">u</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+      <span class="n">ASSERT</span><span class="p">(</span><span class="n">re</span> <span class="o">==</span> <span class="n">ERR_TIMEOUT</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Test sending a second command before the first completes.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendInterruptedCommand</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">setupXferData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>CMD_TOKEN, 0x03: index 0, length 3 (4 bytes)</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="mh">0x03</span><span class="p">,</span> <span class="mh">0x00</span><span class="p">,</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="mh">0x03</span><span class="p">,</span> <span class="mh">0x00</span><span class="p">,</span> <span class="mh">0x01</span><span class="p">,</span> <span class="mh">0x02</span><span class="p">,</span> <span class="mh">0x03</span> <span class="p">};</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Send the first command then interrupt it</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>
+  <span class="n">RECEIVE_ERROR</span> <span class="n">re</span> <span class="o">=</span> <span class="n">stepReceiveMachine</span><span class="p">(</span><span class="n">au8_data</span><span class="p">[</span><span class="mi">4</span><span class="p">]);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">re</span> <span class="o">==</span> <span class="n">ERR_INTERRUPTED_CMD</span><span class="p">);</span>
+  <span class="n">clearReceiveMachineError</span><span class="p">();</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Make sure the second command competes</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span> <span class="o">+</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">isReceiveMachineData</span><span class="p">());</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">getReceiveMachineIndex</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">uint</span> <span class="n">i</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">pu8_data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">i</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Test sending data to an unspecified index</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendToUnspecifiedIndex</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>CMD_TOKEN, 0x03: index 0, length 3 (4 bytes)</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="mh">0x03</span> <span class="p">};</span>
+
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+  <span class="n">RECEIVE_ERROR</span> <span class="n">re</span> <span class="o">=</span> <span class="n">stepReceiveMachine</span><span class="p">(</span><span class="n">au8_data</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">re</span> <span class="o">==</span> <span class="n">ERR_UNSPECIFIED_INDEX</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Test sending data to an index beyond the end of the variable
+storage area</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendToHighIndex</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>This test only works if NUM_XFER_VARS is less than the max;
+otherwise, there&#8217;s no &#8220;beyond&#8221; index to test.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">NUM_XFER_VARS</span> <span class="o">&lt;</span> <span class="n">MAX_NUM_XFER_VARS</span><span class="p">);</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>CMD_TOKEN, 0x03: index NUM_XFER_VARS, length 3 (4 bytes)</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="p">(</span><span class="n">NUM_XFER_VARS</span> <span class="o">&lt;&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="o">|</span> <span class="mh">0x03</span> <span class="p">};</span>
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+  <span class="n">RECEIVE_ERROR</span> <span class="n">re</span> <span class="o">=</span> <span class="n">stepReceiveMachine</span><span class="p">(</span><span class="n">au8_data</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">re</span> <span class="o">==</span> <span class="n">ERR_INDEX_TOO_HIGH</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Test sending incorrectly-sized data to a variable.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendWithWrongSize</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">setupXferData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>CMD_TOKEN, 0x03: index 0, length 2 (3 bytes)</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="mh">0x02</span> <span class="p">};</span>
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+  <span class="n">RECEIVE_ERROR</span> <span class="n">re</span> <span class="o">=</span> <span class="n">stepReceiveMachine</span><span class="p">(</span><span class="n">au8_data</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">re</span> <span class="o">==</span> <span class="n">ERR_VAR_SIZE_MISMATCH</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Test sending long data to an unspecified index</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendLongToUnspecifiedIndex</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>CMD_TOKEN, CMD_LONG_VAR, 0x03: index 0, length 3 (4 bytes)</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="n">CMD_LONG_VAR</span><span class="p">,</span> <span class="mh">0x03</span> <span class="p">};</span>
+
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="mi">2</span><span class="p">);</span>
+  <span class="n">RECEIVE_ERROR</span> <span class="n">re</span> <span class="o">=</span> <span class="n">stepReceiveMachine</span><span class="p">(</span><span class="n">au8_data</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">re</span> <span class="o">==</span> <span class="n">ERR_UNSPECIFIED_INDEX</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Test sending long data to an index beyond the end of the variable
+storage area</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendLongToHighIndex</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>This test only works if NUM_XFER_VARS is less than the max;
+otherwise, there&#8217;s no &#8220;beyond&#8221; index to test.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">NUM_XFER_VARS</span> <span class="o">&lt;</span> <span class="n">MAX_NUM_XFER_VARS</span><span class="p">);</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>CMD_TOKEN, CMD_LONG_VAR, index NUM_XFER_VARS, length 3 (4 bytes)</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="n">CMD_LONG_VAR</span><span class="p">,</span> <span class="n">NUM_XFER_VARS</span><span class="p">,</span> <span class="mh">0x03</span> <span class="p">};</span>
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="mi">2</span><span class="p">);</span>
+  <span class="n">RECEIVE_ERROR</span> <span class="n">re</span> <span class="o">=</span> <span class="n">stepReceiveMachine</span><span class="p">(</span><span class="n">au8_data</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">re</span> <span class="o">==</span> <span class="n">ERR_INDEX_TOO_HIGH</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Test sending incorrectly-sized data to a long variable.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendLongWithWrongSize</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">setupXferData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>CMD_TOKEN, CMD_LONG_BAR, index 0, length 2 (3 bytes)</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="n">CMD_LONG_VAR</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mh">0x02</span> <span class="p">};</span>
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="mi">3</span><span class="p">);</span>
+  <span class="n">RECEIVE_ERROR</span> <span class="n">re</span> <span class="o">=</span> <span class="n">stepReceiveMachine</span><span class="p">(</span><span class="n">au8_data</span><span class="p">[</span><span class="mi">3</span><span class="p">]);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">re</span> <span class="o">==</span> <span class="n">ERR_VAR_SIZE_MISMATCH</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Test sending 256 bytes of data.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendLongData</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">uint</span> <span class="n">i</span><span class="p">;</span>
+
+  <span class="n">setupXferData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">256</span><span class="p">);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>CMD_TOKEN, CMD_LONG_VAR, index 0, length 0xFF = 256 bytes</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[</span><span class="mi">256</span> <span class="o">+</span> <span class="mi">5</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="n">CMD_LONG_VAR</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mh">0xFF</span> <span class="p">};</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Fill array with data, escaping the CMD_TOKEN.
+Do horrible casts (to 8 bit, then to uint) to avoid sign-extension
+problems that make this loop run too far (0xAA &lt; 0, without a cast
+is sign-extended to 0xFFFFFFAA, which is a <em>NOT</em> 0x00AA).</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="p">((</span><span class="n">uint</span><span class="p">)</span> <span class="p">((</span><span class="kt">uint8_t</span><span class="p">)</span> <span class="n">CMD_TOKEN</span><span class="p">));</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">au8_data</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span><span class="p">;</span>
+  <span class="n">au8_data</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">ESCAPED_CMD</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">256</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">au8_data</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">5</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span><span class="p">;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Send it, then check the data received</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="mi">256</span> <span class="o">+</span> <span class="mi">5</span><span class="p">);</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">256</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">pu8_data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">i</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="cp">#ifdef __PIC__</span>
+</pre></div>
+</div>
+<p>Test sending data to a read-only variable. Only applies to the PIC.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendReadOnly</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Set up index 0 for 1 byte of data, read-only</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">setupXferData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+  <span class="n">assignBit</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">);</span>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="mh">0x00</span> <span class="p">};</span>
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+
+  <span class="n">RECEIVE_ERROR</span> <span class="n">re</span> <span class="o">=</span> <span class="n">stepReceiveMachine</span><span class="p">(</span><span class="n">au8_data</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">re</span> <span class="o">==</span> <span class="n">ERR_READ_ONLY_VAR</span><span class="p">);</span>
+<span class="p">}</span>
+
+
+</pre></div>
+</div>
+<p>Test sending a var spec</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendVarSpecPic</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Set up index 0 for 1 byte of data, read-only</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">setupXferData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="n">CMD_SEND_ONLY</span> <span class="p">};</span>
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+
+  <span class="n">RECEIVE_ERROR</span> <span class="n">re</span> <span class="o">=</span> <span class="n">stepReceiveMachine</span><span class="p">(</span><span class="n">au8_data</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">re</span> <span class="o">==</span> <span class="n">ERR_PIC_VAR_SPEC</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="cp">#endif</span>
+
+<span class="cp">#ifndef __PIC__</span>
+</pre></div>
+</div>
+<p>Used to create strings with commands in them below.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="cp">#define CMD_TOKEN_STR &quot;\xAA&quot;</span>
+<span class="cp">#define CMD_SEND_ONLY_STR &quot;\xFE&quot;</span>
+<span class="cp">#define CMD_SEND_RECEIVE_VAR_STR &quot;\xFF&quot;</span>
+
+</pre></div>
+</div>
+<p>Test sending a variable specification</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendVarSpec</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>index, length, size,   format,   name,       description</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[</span><span class="mi">17</span><span class="p">]</span> <span class="o">=</span> <span class="n">CMD_TOKEN_STR</span> <span class="n">CMD_SEND_ONLY_STR</span> <span class="s">&quot;</span><span class="se">\x00</span><span class="s">&quot;</span> <span class="s">&quot;</span><span class="se">\x0C</span><span class="s">&quot;</span>  <span class="s">&quot;</span><span class="se">\x03</span><span class="s">&quot;</span>  <span class="s">&quot;%x</span><span class="se">\x00</span><span class="s">&quot;</span>  <span class="s">&quot;test</span><span class="se">\x00</span><span class="s">&quot;</span>  <span class="s">&quot;ing&quot;</span><span class="p">;</span>
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="mi">17</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">isReceiveMachineSpec</span><span class="p">());</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">u8_size</span> <span class="o">==</span> <span class="mi">3</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">pu8_data</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">);</span>   <span class="c1">// Verify that some storage was allocated for this variable</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="o">!</span><span class="n">isVarWriteable</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">psz_format</span><span class="p">,</span> <span class="s">&quot;%x&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">psz_name</span><span class="p">,</span> <span class="s">&quot;test&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">psz_desc</span><span class="p">,</span> <span class="s">&quot;ing&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Test sending a variable specification, then sending a different spec</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">resendVarSpec</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">sendVarSpec</span><span class="p">();</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>index, length, size,   format,   name,       description</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[</span><span class="mi">17</span><span class="p">]</span> <span class="o">=</span> <span class="n">CMD_TOKEN_STR</span> <span class="n">CMD_SEND_ONLY_STR</span> <span class="s">&quot;</span><span class="se">\x00</span><span class="s">&quot;</span> <span class="s">&quot;</span><span class="se">\x0C</span><span class="s">&quot;</span>  <span class="s">&quot;</span><span class="se">\xFF</span><span class="s">&quot;</span>  <span class="s">&quot;%y</span><span class="se">\x00</span><span class="s">&quot;</span>  <span class="s">&quot;book</span><span class="se">\x00</span><span class="s">&quot;</span>  <span class="s">&quot;let&quot;</span><span class="p">;</span>
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="mi">17</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">isReceiveMachineSpec</span><span class="p">());</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">u8_size</span> <span class="o">==</span> <span class="mi">255</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">pu8_data</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">);</span>   <span class="c1">// Verify that some storage was allocated for this variable</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="o">!</span><span class="n">isVarWriteable</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">psz_format</span><span class="p">,</span> <span class="s">&quot;%y&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">psz_name</span><span class="p">,</span> <span class="s">&quot;book&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">psz_desc</span><span class="p">,</span> <span class="s">&quot;let&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Test sending a variable specification</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendWriteableVarSpec</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>index, length, size,   format,   name,       description</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[</span><span class="mi">17</span><span class="p">]</span> <span class="o">=</span> <span class="n">CMD_TOKEN_STR</span> <span class="n">CMD_SEND_RECEIVE_VAR_STR</span> <span class="s">&quot;</span><span class="se">\x00</span><span class="s">&quot;</span> <span class="s">&quot;</span><span class="se">\x0C</span><span class="s">&quot;</span>  <span class="s">&quot;</span><span class="se">\x03</span><span class="s">&quot;</span>  <span class="s">&quot;%x</span><span class="se">\x00</span><span class="s">&quot;</span>  <span class="s">&quot;test</span><span class="se">\x00</span><span class="s">&quot;</span>  <span class="s">&quot;ing&quot;</span><span class="p">;</span>
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="mi">17</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">isReceiveMachineSpec</span><span class="p">());</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">u8_size</span> <span class="o">==</span> <span class="mi">3</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">pu8_data</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">);</span>   <span class="c1">// Verify that some storage was allocated for this variable</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">isVarWriteable</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">psz_format</span><span class="p">,</span> <span class="s">&quot;%x&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">psz_name</span><span class="p">,</span> <span class="s">&quot;test&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">psz_desc</span><span class="p">,</span> <span class="s">&quot;ing&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Test sending a variable specification with no strings</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendEmptyVarSpec</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>index, length, size</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="n">CMD_TOKEN_STR</span> <span class="n">CMD_SEND_RECEIVE_VAR_STR</span> <span class="s">&quot;</span><span class="se">\x00</span><span class="s">&quot;</span> <span class="s">&quot;</span><span class="se">\x00</span><span class="s">&quot;</span>  <span class="s">&quot;</span><span class="se">\x03</span><span class="s">&quot;</span><span class="p">;</span>
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="mi">5</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">isReceiveMachineSpec</span><span class="p">());</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">u8_size</span> <span class="o">==</span> <span class="mi">3</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">pu8_data</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">);</span>   <span class="c1">// Verify that some storage was allocated for this variable</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">isVarWriteable</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">psz_format</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">psz_name</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">psz_desc</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Test sending a variable specification with only a format</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendFormatOnlyVarSpec</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>index, length, size,  format</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span> <span class="o">=</span> <span class="n">CMD_TOKEN_STR</span> <span class="n">CMD_SEND_RECEIVE_VAR_STR</span> <span class="s">&quot;</span><span class="se">\x00</span><span class="s">&quot;</span> <span class="s">&quot;</span><span class="se">\x03</span><span class="s">&quot;</span>  <span class="s">&quot;</span><span class="se">\x03</span><span class="s">&quot;</span> <span class="s">&quot;%x&quot;</span><span class="p">;</span>
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="mi">8</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">isReceiveMachineSpec</span><span class="p">());</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">u8_size</span> <span class="o">==</span> <span class="mi">3</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">pu8_data</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">);</span>   <span class="c1">// Verify that some storage was allocated for this variable</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">isVarWriteable</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">psz_format</span><span class="p">,</span> <span class="s">&quot;%x&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">psz_name</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">psz_desc</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Test sending a variable specification with only a format</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendNameOnlyVarSpec</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>index, length, size, format, name</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[</span><span class="mi">11</span><span class="p">]</span> <span class="o">=</span> <span class="n">CMD_TOKEN_STR</span> <span class="n">CMD_SEND_RECEIVE_VAR_STR</span> <span class="s">&quot;</span><span class="se">\x00</span><span class="s">&quot;</span> <span class="s">&quot;</span><span class="se">\x06</span><span class="s">&quot;</span> <span class="s">&quot;</span><span class="se">\x03</span><span class="s">&quot;</span> <span class="s">&quot;</span><span class="se">\x00</span><span class="s">&quot;</span>  <span class="s">&quot;test&quot;</span><span class="p">;</span>
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="mi">11</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">isReceiveMachineSpec</span><span class="p">());</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">u8_size</span> <span class="o">==</span> <span class="mi">3</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">pu8_data</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">);</span>   <span class="c1">// Verify that some storage was allocated for this variable</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">isVarWriteable</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">psz_format</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">psz_name</span><span class="p">,</span> <span class="s">&quot;test&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">psz_desc</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Test sending a spec followed by actual data</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendVarSpecAndData</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">sendVarSpec</span><span class="p">();</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>0x03: index 0, length 3 (4 bytes); following are data bytes</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="mh">0x03</span><span class="p">,</span> <span class="mh">0x00</span><span class="p">,</span> <span class="mh">0x01</span><span class="p">,</span> <span class="mh">0x02</span><span class="p">,</span> <span class="mh">0x03</span> <span class="p">};</span>
+  <span class="n">sendData</span><span class="p">(</span><span class="n">au8_data</span><span class="p">,</span> <span class="mi">6</span><span class="p">);</span>
+
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">isReceiveMachineData</span><span class="p">());</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">getReceiveMachineIndex</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">uint</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">pu8_data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">i</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="cp">#endif</span>
+
+</pre></div>
+</div>
+<p>Run a sequence of characters through the receive state machine,
+verifying that nothing is received until the final character
+and that no errors occurred.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">sendData</span><span class="p">(</span><span class="kt">uint8_t</span><span class="o">*</span> <span class="n">pu8_data</span><span class="p">,</span> <span class="n">uint</span> <span class="n">u_len</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">while</span> <span class="p">(</span><span class="n">u_len</span><span class="o">--</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">RECEIVE_ERROR</span> <span class="n">re</span> <span class="o">=</span> <span class="n">stepReceiveMachine</span><span class="p">(</span><span class="o">*</span><span class="n">pu8_data</span><span class="o">++</span><span class="p">);</span>
+    <span class="n">ASSERT</span><span class="p">(</span><span class="n">re</span> <span class="o">==</span> <span class="n">ERR_NONE</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">u_len</span><span class="p">)</span>
+      <span class="n">ASSERT</span><span class="p">(</span><span class="n">getReceiveMachineState</span><span class="p">()</span> <span class="o">!=</span> <span class="n">STATE_RECV_START</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+<span class="c1">//@}</span>
+
+</pre></div>
+</div>
+<p>name Tests for the specify and send functions</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="c1">//@{</span>
+
+</pre></div>
+</div>
+<p>The length of an array of characters used to check OUT_CHAR&#8217;s usage.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="k">static</span> <span class="kt">size_t</span> <span class="n">st_outCharLen</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+</pre></div>
+</div>
+<p>An index into the array of check characters.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="k">static</span> <span class="kt">size_t</span> <span class="n">st_outCharIndex</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+</pre></div>
+</div>
+<p>A pointer to an array containing the expected characters to be output.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="k">static</span> <span class="kt">uint8_t</span><span class="o">*</span> <span class="n">au8_outCharData</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+
+</pre></div>
+</div>
+<p>Reset all the OUT_CHAR associated data (the variables above).</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">clearOutChar</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">st_outCharLen</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">st_outCharIndex</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">au8_outCharData</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>An outChar function which simply checks to see that the output character
+matches the expected string.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="cp">#ifdef __cplusplus</span>
+<span class="k">extern</span> <span class="s">&quot;C&quot;</span>
+<span class="cp">#endif</span>
+<span class="kt">void</span> <span class="n">testOutChar</span><span class="p">(</span><span class="kt">uint8_t</span> <span class="n">c</span><span class="p">)</span> <span class="p">{</span>
+<span class="n">ASSERT</span><span class="p">(</span><span class="n">au8_outCharData</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">);</span>
+<span class="n">ASSERT</span><span class="p">(</span><span class="n">st_outCharIndex</span> <span class="o">&lt;</span> <span class="n">st_outCharLen</span><span class="p">);</span>
+<span class="n">ASSERT</span><span class="p">(</span><span class="n">au8_outCharData</span><span class="p">[</span><span class="n">st_outCharIndex</span><span class="o">++</span><span class="p">]</span> <span class="o">==</span> <span class="n">c</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="cm">/** Test support: ASSERT if an exception isn&#39;t thrown.</span>
+<span class="cm"> *  \param code Code which when executed should cause a specific ASSERT.</span>
+<span class="cm"> *  \param expectedMsg String the ASSERT should throw.</span>
+<span class="cm"> *  This macro expects to test ASSERT statements of the form</span>
+<span class="cm"> *  ASSERT(&quot;a string&quot; &amp;&amp; someCondition). The &quot;a string&quot; portion is always</span>
+<span class="cm"> *  true, but also provides a hackish way to name an assert. To make</span>
+<span class="cm"> *  testing easier, only the text inside the quotes is tested: the</span>
+<span class="cm"> *  expectedString in this case is &quot;a string&quot;.</span>
+<span class="cm"> */</span>
+<span class="cp">#ifdef __cplusplus</span>
+<span class="cp">#define REQUIRE_ASSERT(code, expectedMsg)      \</span>
+<span class="cp">  do {                          \</span>
+<span class="cp">    BOOL didAssert = FALSE;   \</span>
+<span class="cp">    try {                     \</span>
+<span class="cp">      code;                 \</span>
+<span class="cp">    } catch (char* psz_msg) { \</span>
+<span class="cp">      didAssert = strncmp(psz_msg, expectedMsg, strlen(expectedMsg)) ? FALSE : TRUE;     \</span>
+<span class="cp">    }                         \</span>
+<span class="cp">    ASSERT(didAssert);        \</span>
+<span class="cp">  } while (FALSE)</span>
+<span class="cp">#else</span>
+</pre></div>
+</div>
+<p>Do nothing, since C doesn&#8217;t support exceptions</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="cp">#define REQUIRE_ASSERT(code, expectedMsg) (void) 0</span>
+<span class="cp">#endif</span>
+
+</pre></div>
+</div>
+<p>Send to a index that&#8217;s too high</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">testSendIndexTooHigh</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">REQUIRE_ASSERT</span><span class="p">(</span><span class="n">sendVar</span><span class="p">(</span><span class="n">NUM_XFER_VARS</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="s">&quot;sendVar:indexTooHigh&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Send to an unconfigured index</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">testSendIndexUnspecificed</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">REQUIRE_ASSERT</span><span class="p">(</span><span class="n">sendVar</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="s">&quot;sendVar:indexNotSpecified&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Send to a read-only variable (PC only)</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="cp">#ifndef __PIC__</span>
+<span class="kt">void</span> <span class="nf">testSendToReadOnly</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Set up index 0 for 1 byte of data, read-only</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">setupXferData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+  <span class="n">assignBit</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Expected transmission</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">REQUIRE_ASSERT</span><span class="p">(</span><span class="n">sendVar</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="s">&quot;sendVar:notWriteable&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="cp">#endif</span>
+
+</pre></div>
+</div>
+<p>A macro to send a variable and check the resulting output</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">checkSendVar</span><span class="p">(</span><span class="kt">uint8_t</span> <span class="n">u8_index</span><span class="p">,</span> <span class="n">uint</span> <span class="n">u_len</span><span class="p">,</span> <span class="kt">uint8_t</span><span class="o">*</span> <span class="n">au8_data</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">au8_outCharData</span> <span class="o">=</span> <span class="n">au8_data</span><span class="p">;</span>
+  <span class="n">st_outCharLen</span> <span class="o">=</span> <span class="n">u_len</span><span class="p">;</span>
+  <span class="n">sendVar</span><span class="p">(</span><span class="n">u8_index</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">st_outCharIndex</span> <span class="o">==</span> <span class="n">st_outCharLen</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Send a one-byte variable</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">testSendOneByteVar</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Set up index 0 for 1 byte of data</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">setupXferData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Assign data</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">pu8_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Expected transmission</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="mh">0x00</span><span class="p">,</span> <span class="mh">0x00</span> <span class="p">};</span>
+  <span class="n">checkSendVar</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">au8_data</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Send a one-byte variable that needs to be escaped</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">testSendOneEscapedByteVar</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Set up index 0 for 1 byte of data</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">setupXferData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Assign data</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">pu8_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">CMD_TOKEN</span><span class="p">;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Expected transmission</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="n">ESCAPED_CMD</span> <span class="p">};</span>
+  <span class="n">checkSendVar</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">au8_data</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Send a four-byte variable</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">testSendFourByteVar</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Set up index 0 for 4 bytes of data</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">setupXferData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Assign data</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">uint</span> <span class="n">u_i</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u_i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">u_i</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">;</span> <span class="n">u_i</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">pu8_data</span><span class="p">[</span><span class="n">u_i</span><span class="p">]</span> <span class="o">=</span> <span class="n">u_i</span><span class="p">;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Expected transmission</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="mh">0x03</span><span class="p">,</span> <span class="mh">0x00</span><span class="p">,</span> <span class="mh">0x01</span><span class="p">,</span> <span class="mh">0x02</span><span class="p">,</span> <span class="mh">0x03</span> <span class="p">};</span>
+  <span class="n">checkSendVar</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="n">au8_data</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Send a 256-byte variable</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">testSend256ByteVar</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Set up index 0 for 256 bytes of data</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">setupXferData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">256</span><span class="p">);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Assign data</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">uint</span> <span class="n">u_i</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u_i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">u_i</span> <span class="o">&lt;</span> <span class="mi">256</span><span class="p">;</span> <span class="n">u_i</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">pu8_data</span><span class="p">[</span><span class="n">u_i</span><span class="p">]</span> <span class="o">=</span> <span class="n">u_i</span><span class="p">;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Expected transmission</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[</span><span class="mi">261</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="n">CMD_LONG_VAR</span><span class="p">,</span> <span class="mh">0x00</span><span class="p">,</span> <span class="mh">0xFF</span> <span class="p">};</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Do horrible casts (to 8 bit, then to uint) to avoid sign-extension
+problems that make this loop run too far (0xAA &lt; 0, without a cast
+is sign-extended to 0xFFFFFFAA, which is a <em>NOT</em> 0x00AA).</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u_i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">u_i</span> <span class="o">&lt;=</span> <span class="p">((</span><span class="n">uint</span><span class="p">)</span> <span class="p">((</span><span class="kt">uint8_t</span><span class="p">)</span> <span class="n">CMD_TOKEN</span><span class="p">));</span> <span class="n">u_i</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">au8_data</span><span class="p">[</span><span class="n">u_i</span> <span class="o">+</span> <span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">u_i</span><span class="p">;</span>
+  <span class="n">au8_data</span><span class="p">[</span><span class="n">u_i</span> <span class="o">+</span> <span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">ESCAPED_CMD</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(;</span> <span class="n">u_i</span> <span class="o">&lt;</span> <span class="mi">256</span><span class="p">;</span> <span class="n">u_i</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">au8_data</span><span class="p">[</span><span class="n">u_i</span> <span class="o">+</span> <span class="mi">5</span><span class="p">]</span> <span class="o">=</span> <span class="n">u_i</span><span class="p">;</span>
+  <span class="n">checkSendVar</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">261</span><span class="p">,</span> <span class="n">au8_data</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Specify an index that&#8217;s too high</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">testSpecifyIndexTooHigh</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Dummy buffer to hold variable data</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_buf</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+  <span class="n">REQUIRE_ASSERT</span><span class="p">(</span><span class="n">specifyVar</span><span class="p">(</span><span class="n">NUM_XFER_VARS</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">au8_buf</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">),</span>
+                 <span class="s">&quot;specifyVar:indexTooHigh&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Specify with NULL data</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">testSpecifyNullData</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">REQUIRE_ASSERT</span><span class="p">(</span><span class="n">specifyVar</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">),</span>
+                 <span class="s">&quot;specifyVar:nullData&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Specify with an invalid size</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">testSpecifyInvalidSize</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Dummy buffer to hold variable data</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_buf</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+  <span class="n">REQUIRE_ASSERT</span><span class="p">(</span><span class="n">specifyVar</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">au8_buf</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">),</span>
+                 <span class="s">&quot;specifyVar:invalidSize&quot;</span><span class="p">);</span>
+  <span class="n">REQUIRE_ASSERT</span><span class="p">(</span><span class="n">specifyVar</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">au8_buf</span><span class="p">,</span> <span class="mi">257</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">),</span>
+                 <span class="s">&quot;specifyVar:invalidSize&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Minimally specify a variable</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">testSpecifyMinimalVar</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Dummy buffer to hold variable data</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_buf</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Expected transmission</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[</span><span class="mi">5</span> <span class="o">+</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="n">CMD_SEND_RECEIVE_VAR</span><span class="p">,</span> <span class="mi">0</span> <span class="cm">/* u_varIndex */</span><span class="p">,</span>
+                              <span class="mi">3</span> <span class="cm">/* length of rest - 1 */</span><span class="p">,</span> <span class="cm">/* var size - 1 */</span> <span class="mi">0</span><span class="p">,</span> <span class="cm">/* data */</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+                            <span class="p">};</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Test it out</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">au8_outCharData</span> <span class="o">=</span> <span class="n">au8_data</span><span class="p">;</span>
+  <span class="n">st_outCharLen</span> <span class="o">=</span> <span class="mi">8</span><span class="p">;</span>
+  <span class="n">specifyVar</span><span class="p">(</span><span class="mi">0</span> <span class="cm">/* u_varIndex */</span><span class="p">,</span> <span class="n">au8_buf</span><span class="p">,</span> <span class="mi">1</span> <span class="cm">/* u_size */</span><span class="p">,</span>
+             <span class="n">TRUE</span> <span class="cm">/* b_isWriteable */</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">st_outCharIndex</span> <span class="o">==</span> <span class="n">st_outCharLen</span><span class="p">);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Make sure data structure was updated</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">pu8_data</span> <span class="o">==</span> <span class="n">au8_buf</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">u8_size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">isVarWriteable</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Test specifying a var with a format string which exceeds the max length.
+Also check a send-only variable.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">testSpecifyLongFormat</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Dummy buffer to hold variable data</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_buf</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Expected transmission</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[</span><span class="mi">5</span> <span class="o">+</span> <span class="mi">256</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="n">CMD_SEND_ONLY</span><span class="p">,</span> <span class="mi">0</span> <span class="cm">/* u_varIndex */</span><span class="p">,</span>
+                                <span class="mi">255</span> <span class="cm">/* length of rest - 1 */</span><span class="p">,</span> <span class="cm">/* var size - 1 */</span> <span class="mi">0</span><span class="p">,</span> <span class="cm">/* data -- filled in below */</span>
+                              <span class="p">};</span>
+  <span class="n">uint</span> <span class="n">u_i</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u_i</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span> <span class="n">u_i</span> <span class="o">&lt;</span> <span class="mi">5</span> <span class="o">+</span> <span class="mi">256</span><span class="p">;</span> <span class="n">u_i</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">au8_data</span><span class="p">[</span><span class="n">u_i</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39; &#39;</span><span class="p">;</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Test it out</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">au8_outCharData</span> <span class="o">=</span> <span class="n">au8_data</span><span class="p">;</span>
+  <span class="n">st_outCharLen</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">+</span> <span class="mi">256</span><span class="p">;</span>
+  <span class="n">specifyVar</span><span class="p">(</span><span class="mi">0</span> <span class="cm">/* u_varIndex */</span><span class="p">,</span> <span class="n">au8_buf</span><span class="p">,</span> <span class="mi">1</span> <span class="cm">/* u_size */</span><span class="p">,</span>
+             <span class="n">FALSE</span> <span class="cm">/* b_isWriteable */</span><span class="p">,</span> <span class="c1">// a looong format string</span>
+             <span class="s">&quot;                                                                                &quot;</span>
+             <span class="s">&quot;                                                                                &quot;</span>
+             <span class="s">&quot;                                                                                &quot;</span>
+             <span class="s">&quot;                                                                                &quot;</span>
+             <span class="s">&quot;                                                                                &quot;</span><span class="p">,</span>
+             <span class="s">&quot;&quot;</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">st_outCharIndex</span> <span class="o">==</span> <span class="n">st_outCharLen</span><span class="p">);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Make sure data structure was updated</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">pu8_data</span> <span class="o">==</span> <span class="n">au8_buf</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">u8_size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="o">!</span><span class="n">isVarWriteable</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Test specifying a var with a name string which exceeds the max length.
+Also check a send-only variable.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">testSpecifyLongName</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Dummy buffer to hold variable data</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_buf</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Expected transmission</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[</span><span class="mi">5</span> <span class="o">+</span> <span class="mi">256</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="n">CMD_SEND_ONLY</span><span class="p">,</span> <span class="mi">0</span> <span class="cm">/* u_varIndex */</span><span class="p">,</span>
+                                <span class="mi">255</span> <span class="cm">/* length of rest - 1 */</span><span class="p">,</span> <span class="cm">/* var size - 1 */</span> <span class="mi">0</span><span class="p">,</span> <span class="cm">/* data -- filled in below */</span> <span class="mi">0</span>
+                              <span class="p">};</span>
+  <span class="n">uint</span> <span class="n">u_i</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u_i</span> <span class="o">=</span> <span class="mi">6</span><span class="p">;</span> <span class="n">u_i</span> <span class="o">&lt;</span> <span class="mi">6</span> <span class="o">+</span> <span class="mi">256</span><span class="p">;</span> <span class="n">u_i</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">au8_data</span><span class="p">[</span><span class="n">u_i</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39; &#39;</span><span class="p">;</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Test it out</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">au8_outCharData</span> <span class="o">=</span> <span class="n">au8_data</span><span class="p">;</span>
+  <span class="n">st_outCharLen</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">+</span> <span class="mi">256</span><span class="p">;</span>
+  <span class="n">specifyVar</span><span class="p">(</span><span class="mi">0</span> <span class="cm">/* u_varIndex */</span><span class="p">,</span> <span class="n">au8_buf</span><span class="p">,</span> <span class="mi">1</span> <span class="cm">/* u_size */</span><span class="p">,</span>
+             <span class="n">FALSE</span> <span class="cm">/* b_isWriteable */</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">,</span> <span class="c1">// a looong name string</span>
+             <span class="s">&quot;                                                                                &quot;</span>
+             <span class="s">&quot;                                                                                &quot;</span>
+             <span class="s">&quot;                                                                                &quot;</span>
+             <span class="s">&quot;                                                                                &quot;</span>
+             <span class="s">&quot;                                                                                &quot;</span><span class="p">,</span>
+             <span class="s">&quot;&quot;</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">st_outCharIndex</span> <span class="o">==</span> <span class="n">st_outCharLen</span><span class="p">);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Make sure data structure was updated</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">pu8_data</span> <span class="o">==</span> <span class="n">au8_buf</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">u8_size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="o">!</span><span class="n">isVarWriteable</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Test specifying a var with a description string which exceeds the max length.
+Also check a send-only variable.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">testSpecifyLongDesc</span><span class="p">()</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Dummy buffer to hold variable data</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_buf</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Expected transmission</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="kt">uint8_t</span> <span class="n">au8_data</span><span class="p">[</span><span class="mi">5</span> <span class="o">+</span> <span class="mi">256</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">CMD_TOKEN</span><span class="p">,</span> <span class="n">CMD_SEND_ONLY</span><span class="p">,</span> <span class="mi">0</span> <span class="cm">/* u_varIndex */</span><span class="p">,</span>
+                                <span class="mi">255</span> <span class="cm">/* length of rest - 1 */</span><span class="p">,</span> <span class="cm">/* var size - 1 */</span> <span class="mi">0</span><span class="p">,</span> <span class="cm">/* data -- filled in below */</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+                              <span class="p">};</span>
+  <span class="n">uint</span> <span class="n">u_i</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u_i</span> <span class="o">=</span> <span class="mi">7</span><span class="p">;</span> <span class="n">u_i</span> <span class="o">&lt;</span> <span class="mi">7</span> <span class="o">+</span> <span class="mi">256</span><span class="p">;</span> <span class="n">u_i</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">au8_data</span><span class="p">[</span><span class="n">u_i</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39; &#39;</span><span class="p">;</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Test it out</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">au8_outCharData</span> <span class="o">=</span> <span class="n">au8_data</span><span class="p">;</span>
+  <span class="n">st_outCharLen</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">+</span> <span class="mi">256</span><span class="p">;</span>
+  <span class="n">specifyVar</span><span class="p">(</span><span class="mi">0</span> <span class="cm">/* u_varIndex */</span><span class="p">,</span> <span class="n">au8_buf</span><span class="p">,</span> <span class="mi">1</span> <span class="cm">/* u_size */</span><span class="p">,</span>
+             <span class="n">FALSE</span> <span class="cm">/* b_isWriteable */</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">,</span> <span class="c1">// a looong description string</span>
+             <span class="s">&quot;                                                                                &quot;</span>
+             <span class="s">&quot;                                                                                &quot;</span>
+             <span class="s">&quot;                                                                                &quot;</span>
+             <span class="s">&quot;                                                                                &quot;</span>
+             <span class="s">&quot;                                                                                &quot;</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">st_outCharIndex</span> <span class="o">==</span> <span class="n">st_outCharLen</span><span class="p">);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Make sure data structure was updated</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">pu8_data</span> <span class="o">==</span> <span class="n">au8_buf</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">xferVar</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">u8_size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="o">!</span><span class="n">isVarWriteable</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Send to a index that&#8217;s too high</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">testFormatIndexTooHigh</span><span class="p">()</span> <span class="p">{</span>
+  <span class="kt">char</span> <span class="n">psz_buf</span><span class="p">[</span><span class="mi">200</span><span class="p">];</span>
+  <span class="n">REQUIRE_ASSERT</span><span class="p">(</span><span class="n">formatVar</span><span class="p">(</span><span class="n">NUM_XFER_VARS</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">psz_buf</span><span class="p">),</span> <span class="s">&quot;formatVar:indexTooHigh&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Send to an unconfigured index</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">testFormatIndexUnspecificed</span><span class="p">()</span> <span class="p">{</span>
+  <span class="kt">char</span> <span class="n">psz_buf</span><span class="p">[</span><span class="mi">200</span><span class="p">];</span>
+  <span class="n">REQUIRE_ASSERT</span><span class="p">(</span><span class="n">formatVar</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">psz_buf</span><span class="p">),</span> <span class="s">&quot;formatVar:indexNotSpecified&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+
+
+</pre></div>
+</div>
+<p>A list of functions which comprise tests to be run,
+terminated with a NULL.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">afp_testList</span><span class="p">[])()</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="n">findChar</span><span class="p">,</span>
+  <span class="n">findEscapedCommandChar</span><span class="p">,</span>
+  <span class="n">findCommand</span><span class="p">,</span>
+  <span class="n">findEscapedCommand</span><span class="p">,</span>
+  <span class="n">findRepeatedWait</span><span class="p">,</span>
+  <span class="n">findRepeatedCommand</span><span class="p">,</span>
+  <span class="n">sendLetter</span><span class="p">,</span>
+  <span class="n">send0x00</span><span class="p">,</span>
+  <span class="n">send0xFF</span><span class="p">,</span>
+  <span class="n">sendEscapedCommand</span><span class="p">,</span>
+  <span class="n">sendOneByteData</span><span class="p">,</span>
+  <span class="n">sendFourBytesData</span><span class="p">,</span>
+  <span class="n">sendFourBytesCmdTokenData</span><span class="p">,</span>
+  <span class="n">sendRepeatedCommand</span><span class="p">,</span>
+  <span class="n">sendCommandCmdToken</span><span class="p">,</span>
+  <span class="n">sendRepeatedCommandCmdToken</span><span class="p">,</span>
+  <span class="n">sendWithTimeout</span><span class="p">,</span>
+  <span class="n">sendInterruptedCommand</span><span class="p">,</span>
+  <span class="n">sendToUnspecifiedIndex</span><span class="p">,</span>
+  <span class="n">sendToHighIndex</span><span class="p">,</span>
+  <span class="n">sendWithWrongSize</span><span class="p">,</span>
+  <span class="n">sendLongToUnspecifiedIndex</span><span class="p">,</span>
+  <span class="n">sendLongToHighIndex</span><span class="p">,</span>
+  <span class="n">sendLongWithWrongSize</span><span class="p">,</span>
+  <span class="n">sendLongData</span><span class="p">,</span> <span class="c1">// FAIL - crashes xUnit</span>
+  <span class="n">testSpecifyLongFormat</span><span class="p">,</span>
+  <span class="n">testSpecifyLongName</span><span class="p">,</span>
+  <span class="n">testSpecifyLongDesc</span><span class="p">,</span>
+<span class="cp">#ifdef __PIC__</span>
+  <span class="n">sendReadOnly</span><span class="p">,</span>
+  <span class="n">sendVarSpecPic</span><span class="p">,</span>
+<span class="cp">#else</span>
+  <span class="n">sendVarSpec</span><span class="p">,</span>
+  <span class="n">sendWriteableVarSpec</span><span class="p">,</span>
+  <span class="n">resendVarSpec</span><span class="p">,</span>
+  <span class="n">sendEmptyVarSpec</span><span class="p">,</span>
+  <span class="n">sendFormatOnlyVarSpec</span><span class="p">,</span>
+  <span class="n">sendNameOnlyVarSpec</span><span class="p">,</span>
+  <span class="n">sendVarSpecAndData</span><span class="p">,</span>
+  <span class="n">testSendToReadOnly</span><span class="p">,</span>
+  <span class="n">testFormatIndexTooHigh</span><span class="p">,</span>
+  <span class="n">testFormatIndexUnspecificed</span><span class="p">,</span>
+<span class="cp">#endif</span>
+  <span class="n">testSendIndexTooHigh</span><span class="p">,</span>
+  <span class="n">testSendIndexUnspecificed</span><span class="p">,</span>
+  <span class="n">testSendOneByteVar</span><span class="p">,</span>
+  <span class="n">testSendOneEscapedByteVar</span><span class="p">,</span>
+  <span class="n">testSendFourByteVar</span><span class="p">,</span>
+  <span class="n">testSend256ByteVar</span><span class="p">,</span>
+  <span class="n">testSpecifyIndexTooHigh</span><span class="p">,</span>
+  <span class="n">testSpecifyNullData</span><span class="p">,</span>
+  <span class="n">testSpecifyInvalidSize</span><span class="p">,</span>
+  <span class="n">testSpecifyMinimalVar</span><span class="p">,</span>
+  <span class="nb">NULL</span>
+<span class="p">};</span>
+
+
+</pre></div>
+</div>
+<p>Execute one test. This resets the state machines before a run to
+create a clean slate for every test.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="n">runTest</span><span class="p">(</span>
+</pre></div>
+</div>
+<p>Index of test to run. NO BOUNDS CHECKING is performed
+on this index. Be careful.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">uint</span> <span class="n">u_index</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">initDataXfer</span><span class="p">();</span>
+  <span class="n">clearOutChar</span><span class="p">();</span>
+  <span class="p">(</span><span class="n">afp_testList</span><span class="p">[</span><span class="n">u_index</span><span class="p">])();</span>  <span class="c1">// Execute the specified test</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Run all the tests by executing everything in the list of tests.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">runAllTests</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">uint</span> <span class="n">u_index</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u_index</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">afp_testList</span><span class="p">[</span><span class="n">u_index</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">;</span> <span class="n">u_index</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Running test %d...&quot;</span><span class="p">,</span> <span class="n">u_index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+    <span class="n">runTest</span><span class="p">(</span><span class="n">u_index</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;success.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;All %d tests passed.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">u_index</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="unittest_rounding.c.html" title="unittest_rounding.c - Unit tests of the round functions"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="test_ports.X/test_ports.c.html" title="test_ports.c - Test the GPIO configuration macros in includepic24_ports_config.h"
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../utilities.html" >Utilities</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

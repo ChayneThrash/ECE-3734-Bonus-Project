@@ -1,0 +1,114 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>countOnes.c - Counts the number of 1 bits in u16_v &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="countOnes_assem.s - Counts the number of 1 bits in a word" href="countOnes_assem.s.html" />
+    <link rel="prev" title="nsc.s - Implement the Number Sequencing Computering in PIC24 assembly." href="../chap04/nsc.s.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="countOnes_assem.s.html" title="countOnes_assem.s - Counts the number of 1 bits in a word"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../chap04/nsc.s.html" title="nsc.s - Implement the Number Sequencing Computering in PIC24 assembly."
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="countones-c-counts-the-number-of-1-bits-in-u16-v">
+<h1>countOnes.c - Counts the number of 1 bits in u16_v<a class="headerlink" href="#countones-c-counts-the-number-of-1-bits-in-u16-v" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="cp">#include &quot;pic24_all.h&quot;</span>
+<span class="cp">#include &lt;stdio.h&gt;</span>
+
+<span class="kt">uint8_t</span> <span class="nf">countOnes</span> <span class="p">(</span><span class="kt">uint16_t</span> <span class="n">u16_v</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">uint8_t</span> <span class="n">u8_cnt</span><span class="p">,</span> <span class="n">u8_i</span><span class="p">;</span>
+
+  <span class="n">u8_cnt</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u8_i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">&lt;</span><span class="mi">16</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">u16_v</span> <span class="o">&amp;</span> <span class="mh">0x0001</span><span class="p">)</span> <span class="n">u8_cnt</span><span class="o">++</span><span class="p">;</span>
+    <span class="n">u16_v</span> <span class="o">=</span> <span class="n">u16_v</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">return</span><span class="p">(</span><span class="n">u8_cnt</span><span class="p">);</span>
+<span class="p">}</span>
+
+
+<span class="kt">int</span> <span class="nf">main</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+
+  <span class="kt">uint16_t</span> <span class="n">u16_k</span><span class="p">;</span>
+  <span class="kt">uint8_t</span>  <span class="n">u8_j</span><span class="p">;</span>
+
+  <span class="n">u16_k</span> <span class="o">=</span> <span class="mh">0xA501</span><span class="p">;</span>
+  <span class="n">u8_j</span> <span class="o">=</span> <span class="n">countOnes</span><span class="p">(</span><span class="n">u16_k</span><span class="p">);</span>
+  <span class="n">printf</span> <span class="p">(</span>
+    <span class="s">&quot;Number of one bits in %x is %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+    <span class="n">u16_k</span><span class="p">,</span> <span class="n">u8_j</span><span class="p">);</span>
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="countOnes_assem.s.html" title="countOnes_assem.s - Counts the number of 1 bits in a word"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../chap04/nsc.s.html" title="nsc.s - Implement the Number Sequencing Computering in PIC24 assembly."
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

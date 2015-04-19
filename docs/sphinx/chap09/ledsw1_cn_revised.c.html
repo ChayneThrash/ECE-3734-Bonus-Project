@@ -1,0 +1,682 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>ledsw1_cn_revised.c - Example of implementing a FSM using a timer and change notification interrupt. &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="rot_enc.c - A 2-bit incremental Gray code rotary encoder example" href="rot_enc.c.html" />
+    <link rel="prev" title="ledsw1_cn.c - Example of implementing a FSM using a timer and change notification interrupt." href="ledsw1_cn.c.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="rot_enc.c.html" title="rot_enc.c - A 2-bit incremental Gray code rotary encoder example"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="ledsw1_cn.c.html" title="ledsw1_cn.c - Example of implementing a FSM using a timer and change notification interrupt."
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="ledsw1-cn-revised-c-example-of-implementing-a-fsm-using-a-timer-and-change-notification-interrupt">
+<h1>ledsw1_cn_revised.c - Example of implementing a FSM using a timer and change notification interrupt.<a class="headerlink" href="#ledsw1-cn-revised-c-example-of-implementing-a-fsm-using-a-timer-and-change-notification-interrupt" title="Permalink to this headline">¶</a></h1>
+<p>Demonstrates the use of a events to create an energy-efficient FSM implementation. All of the FSM work is done in the ISR.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+
+
+<span class="cp">#include &lt;stdio.h&gt;</span>
+<span class="cp">#include &quot;pic24_all.h&quot;</span>
+
+<span class="kt">void</span> <span class="nf">update_state</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+
+</pre></div>
+</div>
+<div class="section" id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="led1-configuration-and-access">
+<h3>LED1 configuration and access<a class="headerlink" href="#led1-configuration-and-access" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="cp">#define CONFIG_LED1() CONFIG_RB14_AS_DIG_OUTPUT()</span>
+<span class="cp">#define LED1 (_LATB14)</span>
+
+</pre></div>
+</div>
+</div>
+<div class="section" id="pushbutton-configuration-and-access">
+<h3>Pushbutton configuration and access<a class="headerlink" href="#pushbutton-configuration-and-access" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">config_pb</span><span class="p">()</span>  <span class="p">{</span>
+  <span class="n">CONFIG_RB13_AS_DIG_INPUT</span><span class="p">();</span>
+  <span class="n">ENABLE_RB13_PULLUP</span><span class="p">();</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Give the pullup some time to take effect.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">DELAY_US</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="cp">#if (HARDWARE_PLATFORM == EMBEDDED_C1)</span>
+<span class="cp"># define PB_PRESSED()   (_RB7 == 0)</span>
+<span class="cp"># define PB_RELEASED()  (_RB7 == 1)</span>
+<span class="cp">#else</span>
+<span class="cp"># define PB_PRESSED()   (_RB13 == 0)</span>
+<span class="cp"># define PB_RELEASED()  (_RB13 == 1)</span>
+<span class="cp">#endif</span>
+
+</pre></div>
+</div>
+</div>
+<div class="section" id="switch-configuration-and-access">
+<h3>Switch configuration and access<a class="headerlink" href="#switch-configuration-and-access" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">config_sw</span><span class="p">()</span>  <span class="p">{</span>
+  <span class="n">CONFIG_RB12_AS_DIG_INPUT</span><span class="p">();</span>
+  <span class="n">ENABLE_RB12_PULLUP</span><span class="p">();</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Give the pullup some time to take effect.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">DELAY_US</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="cp">#define SW (_RB12)</span>
+
+</pre></div>
+</div>
+</div>
+<div class="section" id="change-notification-interrupt-configuration">
+<h3>Change notification interrupt configuration<a class="headerlink" href="#change-notification-interrupt-configuration" title="Permalink to this headline">¶</a></h3>
+<p>Enable change-notification interrupts on the pushbutton.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">config_cn</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Enable change notifications on RB13 specifically.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">ENABLE_RB13_CN_INTERRUPT</span><span class="p">();</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Clear the interrupt flag.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">_CNIF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Choose a priority.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">_CNIP</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Enable the Change Notification general interrupt.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">_CNIE</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+</div>
+<div class="section" id="timer3-interrupt-configuration">
+<h3>Timer3 interrupt configuration<a class="headerlink" href="#timer3-interrupt-configuration" title="Permalink to this headline">¶</a></h3>
+<p>Configure the timer to produce interrupts. Do not yet turn it on.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">configTimer3</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Ensure that Timer2,3 configured as separate timers by
+turning 32-bit mode off.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">T2CONbits</span><span class="p">.</span><span class="n">T32</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>T3CON set like this for documentation purposes.
+This could be replaced by T3CON = 0x0020.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">T3CON</span> <span class="o">=</span> <span class="n">T3_OFF</span> <span class="o">|</span> <span class="n">T3_IDLE_CON</span> <span class="o">|</span> <span class="n">T3_GATE_OFF</span>
+          <span class="o">|</span> <span class="n">T3_SOURCE_INT</span>
+          <span class="o">|</span> <span class="n">T3_PS_1_256</span><span class="p">;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Clear the interrupt flag.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">_T3IF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Choose a priority.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">_T3IP</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Enable the timer3 interrupt.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">_T3IE</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+
+
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="interrupts">
+<h2>Interrupts<a class="headerlink" href="#interrupts" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="timer-arming">
+<h3>Timer arming<a class="headerlink" href="#timer-arming" title="Permalink to this headline">¶</a></h3>
+<p>This function prepares the timer to interrupt after the given delay (in ms).</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">timer3_arm</span><span class="p">(</span><span class="kt">uint16_t</span> <span class="n">u16_time_ms</span><span class="p">)</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Convert arm time to timer3 ticks.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">PR3</span> <span class="o">=</span> <span class="n">msToU16Ticks</span><span class="p">(</span><span class="n">u16_time_ms</span><span class="p">,</span> <span class="n">getTimerPrescale</span><span class="p">(</span><span class="n">T3CONbits</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Zero then start the timer.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">TMR3</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">T3CONbits</span><span class="p">.</span><span class="n">TON</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>If a timer interrupt has occurred but not been processed, discard it.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">_T3IF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+</div>
+<div class="section" id="change-notification">
+<h3>Change notification<a class="headerlink" href="#change-notification" title="Permalink to this headline">¶</a></h3>
+<p>Interrupt service routine for change notification interrupts. Disable this
+interrupt to avoid bounce, then arm the timer to update the FSM state after
+a debounce delay.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="n">_ISR</span> <span class="nf">_CNInterrupt</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Acknowledge the interrupt, then disable it. Otherwise, any switch bounce would
+cause spurious interrupts.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">_CNIF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">_CNIE</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Schedule a timer interrupt after a debounce delay.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">timer3_arm</span><span class="p">(</span><span class="n">DEBOUNCE_DLY</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+</div>
+<div class="section" id="timer">
+<h3>Timer<a class="headerlink" href="#timer" title="Permalink to this headline">¶</a></h3>
+<p>Interrupt Service Routine for Timer3</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="n">_ISR</span> <span class="nf">_T3Interrupt</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Clear the interrupt flag.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">_T3IF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Stop the timer; the debounce delay is done.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">T3CONbits</span><span class="p">.</span><span class="n">TON</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Clear the change notification interrupt because switch bounce may have set it.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">_CNIF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Re-enable change notification interrupts, since the debounce delay is done.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">_CNIE</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Run our state machine.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">update_state</span><span class="p">();</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="state-machine">
+<h2>State machine<a class="headerlink" href="#state-machine" title="Permalink to this headline">¶</a></h2>
+<p>First, define the states, along with a human-readable version.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="k">typedef</span> <span class="k">enum</span>  <span class="p">{</span>
+  <span class="n">STATE_RELEASED1</span><span class="p">,</span>
+  <span class="n">STATE_PRESSED1</span><span class="p">,</span>
+  <span class="n">STATE_RELEASED2</span><span class="p">,</span>
+  <span class="n">STATE_PRESSED2</span><span class="p">,</span>
+  <span class="n">STATE_RELEASED3_BLINK</span><span class="p">,</span>
+  <span class="n">STATE_PRESSED3</span><span class="p">,</span>
+<span class="p">}</span> <span class="kt">state_t</span><span class="p">;</span>
+
+<span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">apsz_state_names</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s">&quot;STATE_RELEASED1 - LED is off&quot;</span><span class="p">,</span>
+  <span class="s">&quot;STATE_PRESSED1&quot;</span><span class="p">,</span>
+  <span class="s">&quot;STATE_RELEASED2 - LED is on&quot;</span><span class="p">,</span>
+  <span class="s">&quot;STATE_PRESSED2 - SW2 on goes to blink else go to RELEASED1&quot;</span><span class="p">,</span>
+  <span class="s">&quot;STATE_RELEASED3_BLINK - LED blinks, waiting for SW1 press&quot;</span><span class="p">,</span>
+  <span class="s">&quot;STATE_PRESSED3 - LED is on&quot;</span><span class="p">,</span>
+<span class="p">};</span>
+
+</pre></div>
+</div>
+<p>Provide a convenient function to print out the state.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">print_state</span><span class="p">(</span><span class="kt">state_t</span> <span class="n">e_state</span><span class="p">)</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Verify that the state has a string representation before printing it.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">ASSERT</span><span class="p">(</span><span class="n">e_state</span> <span class="o">&lt;=</span> <span class="n">N_ELEMENTS</span><span class="p">(</span><span class="n">apsz_state_names</span><span class="p">));</span>
+  <span class="n">outString</span><span class="p">(</span><span class="n">apsz_state_names</span><span class="p">[</span><span class="n">e_state</span><span class="p">]);</span>
+  <span class="n">outChar</span><span class="p">(</span><span class="sc">&#39;\n&#39;</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>This function defines the state machine.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">update_state</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">static</span> <span class="kt">state_t</span> <span class="n">e_state</span> <span class="o">=</span> <span class="n">STATE_RELEASED1</span><span class="p">;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>The number of times the LED was toggled in the blink state</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="k">static</span> <span class="kt">uint16_t</span> <span class="n">u16_led_toggles</span><span class="p">;</span>
+
+  <span class="k">switch</span> <span class="p">(</span><span class="n">e_state</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">case</span> <span class="n">STATE_RELEASED1</span>:
+      <span class="k">if</span> <span class="p">(</span><span class="n">PB_PRESSED</span><span class="p">())</span> <span class="p">{</span>
+        <span class="n">e_state</span> <span class="o">=</span> <span class="n">STATE_PRESSED1</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">break</span><span class="p">;</span>
+
+    <span class="k">case</span> <span class="n">STATE_PRESSED1</span>:
+      <span class="k">if</span> <span class="p">(</span><span class="n">PB_RELEASED</span><span class="p">())</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Turn the LED on when entering STATE_RELEASED2.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+        <span class="n">e_state</span> <span class="o">=</span> <span class="n">STATE_RELEASED2</span><span class="p">;</span>
+        <span class="n">LED1</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">break</span><span class="p">;</span>
+
+    <span class="k">case</span> <span class="n">STATE_RELEASED2</span>:
+      <span class="k">if</span> <span class="p">(</span><span class="n">PB_PRESSED</span><span class="p">())</span> <span class="p">{</span>
+        <span class="n">e_state</span> <span class="o">=</span> <span class="n">STATE_PRESSED2</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">break</span><span class="p">;</span>
+
+    <span class="k">case</span> <span class="n">STATE_PRESSED2</span>:
+      <span class="k">if</span> <span class="p">(</span><span class="n">PB_RELEASED</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="n">SW</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">e_state</span> <span class="o">=</span> <span class="n">STATE_RELEASED3_BLINK</span><span class="p">;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Zero the toggled count before entering the blink state.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+        <span class="n">u16_led_toggles</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Schedule a timer interrupt to start the blinking.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+        <span class="n">timer3_arm</span><span class="p">(</span><span class="mi">250</span><span class="p">);</span>
+      <span class="p">}</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">PB_RELEASED</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">SW</span><span class="p">)</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Turn the LED off when moving to STATE_RELEASED1.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+        <span class="n">e_state</span> <span class="o">=</span> <span class="n">STATE_RELEASED1</span><span class="p">;</span>
+        <span class="n">LED1</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">break</span><span class="p">;</span>
+
+    <span class="k">case</span> <span class="n">STATE_RELEASED3_BLINK</span>:
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Toggle the LED.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+      <span class="n">LED1</span> <span class="o">=</span> <span class="o">!</span><span class="n">LED1</span><span class="p">;</span>
+      <span class="n">u16_led_toggles</span><span class="o">++</span><span class="p">;</span>
+      <span class="n">printf</span><span class="p">(</span><span class="s">&quot;toggles = %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">u16_led_toggles</span><span class="p">);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Schedule a timer interrupt to continue the blinking.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+      <span class="n">timer3_arm</span><span class="p">(</span><span class="mi">250</span><span class="p">);</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="n">u16_led_toggles</span> <span class="o">&gt;=</span> <span class="mi">10</span><span class="p">)</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Turn the LED off when moving to STATE_RELEASED1.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+        <span class="n">e_state</span> <span class="o">=</span> <span class="n">STATE_RELEASED1</span><span class="p">;</span>
+        <span class="n">LED1</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">PB_PRESSED</span><span class="p">())</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Freeze the LED on when existing the blink state.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+        <span class="n">e_state</span> <span class="o">=</span> <span class="n">STATE_PRESSED3</span><span class="p">;</span>
+        <span class="n">LED1</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">break</span><span class="p">;</span>
+
+    <span class="k">case</span> <span class="n">STATE_PRESSED3</span>:
+      <span class="k">if</span> <span class="p">(</span><span class="n">PB_RELEASED</span><span class="p">())</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Turn the LED off when moving to STATE_RELEASED1.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+        <span class="n">e_state</span> <span class="o">=</span> <span class="n">STATE_RELEASED1</span><span class="p">;</span>
+        <span class="n">LED1</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">break</span><span class="p">;</span>
+
+    <span class="nl">default:</span>
+      <span class="n">ASSERT</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="n">print_state</span><span class="p">(</span><span class="n">e_state</span><span class="p">);</span>
+<span class="p">}</span>
+
+
+</pre></div>
+</div>
+</div>
+<div class="section" id="main">
+<h2>Main<a class="headerlink" href="#main" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">configBasic</span><span class="p">(</span><span class="n">HELLO_MSG</span><span class="p">);</span>
+  <span class="n">config_pb</span><span class="p">();</span>
+  <span class="n">config_sw</span><span class="p">();</span>
+  <span class="n">CONFIG_LED1</span><span class="p">();</span>
+  <span class="n">configTimer3</span><span class="p">();</span>
+  <span class="n">config_cn</span><span class="p">();</span>
+
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Enter a low-power state, which still keeps timer3 and uart1 running.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+    <span class="n">IDLE</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="rot_enc.c.html" title="rot_enc.c - A 2-bit incremental Gray code rotary encoder example"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="ledsw1_cn.c.html" title="ledsw1_cn.c - Example of implementing a FSM using a timer and change notification interrupt."
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

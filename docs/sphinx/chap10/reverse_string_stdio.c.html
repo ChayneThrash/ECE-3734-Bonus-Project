@@ -1,0 +1,126 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>reverse_string_stdio.c - Inputs a string using scanf, outputs the reverse &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="stdio_test.c - demonstrates use of ‘scanf’ forms" href="stdio_test.c.html" />
+    <link rel="prev" title="mcp24lc515_i2c_eeprom.c - PIC24 uC in Master mode to Microchip 24LC515 EEPROM using I2C" href="mcp24lc515_i2c_eeprom.c.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="stdio_test.c.html" title="stdio_test.c - demonstrates use of ‘scanf’ forms"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mcp24lc515_i2c_eeprom.c.html" title="mcp24lc515_i2c_eeprom.c - PIC24 uC in Master mode to Microchip 24LC515 EEPROM using I2C"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="reverse-string-stdio-c-inputs-a-string-using-scanf-outputs-the-reverse">
+<h1>reverse_string_stdio.c - Inputs a string using <tt class="docutils literal"><span class="pre">scanf</span></tt>, outputs the reverse<a class="headerlink" href="#reverse-string-stdio-c-inputs-a-string-using-scanf-outputs-the-reverse" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c"><div class="highlight"><pre>
+
+<span class="cp">#include &quot;pic24_all.h&quot;</span>
+<span class="cp">#include &lt;stdio.h&gt;</span>
+
+<span class="kt">void</span> <span class="nf">reverseString</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">psz_s1</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">psz_s2</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">char</span> <span class="o">*</span><span class="n">psz_s1end</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="o">*</span><span class="n">psz_s1</span><span class="p">))</span> <span class="p">{</span>
+    <span class="o">*</span><span class="n">psz_s2</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>  <span class="c1">//psz_s1 is empty, return.</span>
+    <span class="k">return</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="n">psz_s1end</span> <span class="o">=</span> <span class="n">psz_s1</span><span class="p">;</span>
+  <span class="c1">//find end of first string</span>
+  <span class="k">while</span> <span class="p">(</span><span class="o">*</span><span class="n">psz_s1end</span><span class="p">)</span> <span class="n">psz_s1end</span><span class="o">++</span><span class="p">;</span>
+  <span class="n">psz_s1end</span><span class="o">--</span><span class="p">;</span>      <span class="c1">//backup one to first non-zero byte</span>
+  <span class="c1">//now copy to S2 in reverse order</span>
+  <span class="k">while</span> <span class="p">(</span><span class="n">psz_s1end</span> <span class="o">!=</span> <span class="n">psz_s1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="o">*</span><span class="n">psz_s2</span> <span class="o">=</span> <span class="o">*</span><span class="n">psz_s1end</span><span class="p">;</span>
+    <span class="n">psz_s1end</span><span class="o">--</span><span class="p">;</span>
+    <span class="n">psz_s2</span><span class="o">++</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="c1">//copy last byte</span>
+  <span class="o">*</span><span class="n">psz_s2</span> <span class="o">=</span> <span class="o">*</span><span class="n">psz_s1end</span><span class="p">;</span>
+  <span class="n">psz_s2</span><span class="o">++</span><span class="p">;</span>
+  <span class="c1">//mark end of string</span>
+  <span class="o">*</span><span class="n">psz_s2</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+
+<span class="cp">#define BUFSIZE 63</span>
+<span class="kt">char</span>  <span class="n">sz_1</span><span class="p">[</span><span class="n">BUFSIZE</span><span class="o">+</span><span class="mi">1</span><span class="p">];</span>
+<span class="kt">char</span>  <span class="n">sz_2</span><span class="p">[</span><span class="n">BUFSIZE</span><span class="o">+</span><span class="mi">1</span><span class="p">];</span>
+<span class="kt">int</span> <span class="nf">main</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">configBasic</span><span class="p">(</span><span class="n">HELLO_MSG</span><span class="p">);</span>
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">scanf</span><span class="p">(</span><span class="s">&quot;%s&quot;</span><span class="p">,</span><span class="n">sz_1</span><span class="p">);</span>          <span class="c1">//get a string from the console</span>
+    <span class="n">reverseString</span><span class="p">(</span><span class="n">sz_1</span><span class="p">,</span> <span class="n">sz_2</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">sz_2</span><span class="p">);</span>      <span class="c1">//output the reversed string</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="stdio_test.c.html" title="stdio_test.c - demonstrates use of ‘scanf’ forms"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mcp24lc515_i2c_eeprom.c.html" title="mcp24lc515_i2c_eeprom.c - PIC24 uC in Master mode to Microchip 24LC515 EEPROM using I2C"
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

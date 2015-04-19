@@ -1,0 +1,243 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>flash_example.c - Illustrates run time self programming of the flash memory &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="i2c_master_reverse_string.c - Master in pair of files that shows a PIC24 I2C master talking to a PIC24 I2C slave" href="i2c_master_reverse_string.c.html" />
+    <link rel="prev" title="ecan_example_fifo_eid.c - Illustrate CAN transmit, receive" href="ecan_example_fifo_eid.c.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="i2c_master_reverse_string.c.html" title="i2c_master_reverse_string.c - Master in pair of files that shows a PIC24 I2C master talking to a PIC24 I2C slave"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="ecan_example_fifo_eid.c.html" title="ecan_example_fifo_eid.c - Illustrate CAN transmit, receive"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="flash-example-c-illustrates-run-time-self-programming-of-the-flash-memory">
+<h1>flash_example.c - Illustrates run time self programming of the flash memory<a class="headerlink" href="#flash-example-c-illustrates-run-time-self-programming-of-the-flash-memory" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c"><div class="highlight"><pre>
+
+<span class="cp">#include &quot;pic24_all.h&quot;</span>
+<span class="cp">#include &lt;stdio.h&gt;</span>
+
+<span class="cp">#if (defined(__PIC24F__) || defined(__PIC24E__) || defined(__dsPIC33E__))</span>
+<span class="cp"># warning &quot;For all PIC24F and some PIC24E/dsPIC33E family members, the DATA_FLASH_PAGE is set to the second to last flash page instead of the last page,&quot;</span>
+<span class="cp"># warning &quot;as the last flash page in the 24F family contains the configuration bits.&quot;</span>
+<span class="cp">#endif</span>
+
+
+<span class="cp">#if defined(__PIC24HJ64GP502__) || defined(__PIC24FJ64GA002__)</span>
+<span class="cp"># define LAST_IMPLEMENTED_PMEM 0x00ABFF</span>
+<span class="cp">#elif defined(__PIC24HJ32GP202__) || defined(__PIC24FJ32GA002__) || defined(__dsPIC33FJ32GP202__)</span>
+<span class="cp"># define LAST_IMPLEMENTED_PMEM 0x0057FF</span>
+<span class="cp">#elif defined(__dsPIC33FJ128GP802__)</span>
+<span class="cp"># define LAST_IMPLEMENTED_PMEM 0x0157FF</span>
+<span class="cp">#elif defined(__PIC24EP64GP202__)               </span><span class="c1">// test PIC24E device</span>
+<span class="cp"># define LAST_IMPLEMENTED_PMEM 0x00AFFF</span>
+<span class="cp">#elif defined(__dsPIC33EP64GP502__) || defined(__dsPIC33EP64GP503__) || defined(__dsPIC33EP64GP504__) || defined(__dsPIC33EP64GP506__)</span>
+<span class="cp"># define LAST_IMPLEMENTED_PMEM 0x00AFFF</span>
+<span class="cp">#elif defined(__dsPIC33EP128GP502__) || defined(__dsPIC33EP128GP504__) || defined(__dsPIC33EP128GP506__)</span>
+<span class="cp"># define LAST_IMPLEMENTED_PMEM 0x0157FF</span>
+<span class="cp">#elif defined(__dsPIC33EP256GP502__) || defined(__dsPIC33EP256GP504__) || defined(__dsPIC33EP256GP506__)</span>
+<span class="cp"># define LAST_IMPLEMENTED_PMEM 0x02AFFF</span>
+<span class="cp">#elif defined(__dsPIC33EP512GP502__) || defined(__dsPIC33EP512GP504__) || defined(__dsPIC33EP512GP506__)</span>
+<span class="cp"># define LAST_IMPLEMENTED_PMEM 0x0557FF</span>
+<span class="cp">#else</span>
+<span class="cp"># error &quot;Define LAST_IMPLEMENTED_PMEM for your processor!&quot;</span>
+<span class="cp">#endif</span>
+
+<span class="c1">//calculate starting address of a flash page to store data</span>
+<span class="cp">#if (defined(__PIC24F__) || defined(__PIC24E__) || defined(__dsPIC33E__))</span>
+<span class="cp"># define DATA_FLASH_PAGE (((LAST_IMPLEMENTED_PMEM/FLASH_PAGESIZE)*FLASH_PAGESIZE)-FLASH_PAGESIZE)  </span><span class="c1">//2nd to last page of flash</span>
+<span class="cp">#endif</span>
+<span class="cp">#if (defined(__PIC24H__) || defined(__dsPIC33F__))</span>
+<span class="cp"># define DATA_FLASH_PAGE ((LAST_IMPLEMENTED_PMEM/FLASH_PAGESIZE)*FLASH_PAGESIZE)  </span><span class="c1">//last page of flash</span>
+<span class="cp">#endif</span>
+
+
+
+<span class="cp">#define RECORD_SIZE 15      </span><span class="c1">//arbitrarily chosen</span>
+<span class="cp">#define NUM_RECORDS 8       </span><span class="c1">//arbitrarily chosen</span>
+<span class="cp">#define FREE_STATUS 0xA5    </span><span class="c1">//arbitrarily chosen, different from USED_STATUS</span>
+<span class="cp">#define USED_STATUS 0x5A    </span><span class="c1">//arbitrarily chosen, different from FREE_STATUS</span>
+
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">_REC</span> <span class="p">{</span>   <span class="c1">//one record</span>
+  <span class="kt">uint8_t</span> <span class="n">status</span><span class="p">;</span>            <span class="c1">//indicates if free or used</span>
+  <span class="kt">char</span>  <span class="n">data</span><span class="p">[</span><span class="n">RECORD_SIZE</span><span class="p">];</span> <span class="c1">//holds the data</span>
+<span class="p">}</span> <span class="n">REC</span><span class="p">;</span>
+
+<span class="cp">#define NUM_ROWS (((NUM_RECORDS*sizeof(REC))/FLASH_ROWBYTES) + 1)</span>
+<span class="cp">#define FLASH_DATA_SIZE (NUM_ROWS*FLASH_ROWBYTES)</span>
+
+<span class="k">typedef</span> <span class="k">union</span> <span class="n">_UFDATA</span> <span class="p">{</span>
+  <span class="n">REC</span>  <span class="n">records</span><span class="p">[</span><span class="n">NUM_RECORDS</span><span class="p">];</span>
+  <span class="kt">char</span> <span class="n">fill</span><span class="p">[</span><span class="n">FLASH_DATA_SIZE</span><span class="p">];</span>  <span class="c1">//worst case allocates extra row, but ensures RAM data block is multiple of row size</span>
+<span class="p">}</span> <span class="n">UFDATA</span><span class="p">;</span>
+
+<span class="n">UFDATA</span> <span class="n">fdata</span> <span class="nf">__attribute__</span> <span class="p">((</span><span class="n">aligned</span><span class="p">(</span><span class="mi">4</span><span class="p">)));</span>
+
+<span class="kt">void</span> <span class="nf">doFormat</span><span class="p">(</span><span class="n">UFDATA</span><span class="o">*</span> <span class="n">p_ufdata</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">uint16_t</span> <span class="n">u16_i</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u16_i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">u16_i</span> <span class="o">&lt;</span> <span class="n">NUM_RECORDS</span><span class="p">;</span> <span class="n">u16_i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">p_ufdata</span><span class="o">-&gt;</span><span class="n">records</span><span class="p">[</span><span class="n">u16_i</span><span class="p">].</span><span class="n">status</span> <span class="o">=</span> <span class="n">FREE_STATUS</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">doCommit</span><span class="p">(</span><span class="n">UFDATA</span><span class="o">*</span> <span class="n">p_ufdata</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">union32</span> <span class="n">u_memaddr</span><span class="p">;</span>
+  <span class="n">u_memaddr</span><span class="p">.</span><span class="n">u32</span> <span class="o">=</span> <span class="n">DATA_FLASH_PAGE</span><span class="p">;</span>
+  <span class="n">doWritePageFlash</span><span class="p">(</span><span class="n">u_memaddr</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint8_t</span> <span class="o">*</span><span class="p">)</span> <span class="n">p_ufdata</span><span class="p">,</span> <span class="n">FLASH_DATA_SIZE</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">doRead</span><span class="p">(</span><span class="n">UFDATA</span><span class="o">*</span> <span class="n">p_ufdata</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">union32</span> <span class="n">u_memaddr</span><span class="p">;</span>
+  <span class="n">u_memaddr</span><span class="p">.</span><span class="n">u32</span> <span class="o">=</span> <span class="n">DATA_FLASH_PAGE</span><span class="p">;</span>
+  <span class="n">doReadPageFlash</span><span class="p">(</span><span class="n">u_memaddr</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint8_t</span> <span class="o">*</span><span class="p">)</span> <span class="n">p_ufdata</span><span class="p">,</span> <span class="n">FLASH_DATA_SIZE</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">doDelete</span><span class="p">(</span><span class="kt">uint16_t</span> <span class="n">u16_recnum</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">fdata</span><span class="p">.</span><span class="n">records</span><span class="p">[</span><span class="n">u16_recnum</span><span class="p">].</span><span class="n">status</span> <span class="o">=</span> <span class="n">FREE_STATUS</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">doPrint</span><span class="p">(</span><span class="n">UFDATA</span><span class="o">*</span> <span class="n">p_ufdata</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">uint16_t</span> <span class="n">u16_i</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u16_i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">u16_i</span> <span class="o">&lt;</span> <span class="n">NUM_RECORDS</span><span class="p">;</span> <span class="n">u16_i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%d: %s, Data: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+           <span class="n">u16_i</span><span class="p">,</span> <span class="p">(</span><span class="n">p_ufdata</span><span class="o">-&gt;</span><span class="n">records</span><span class="p">[</span><span class="n">u16_i</span><span class="p">].</span><span class="n">status</span> <span class="o">==</span> <span class="n">FREE_STATUS</span> <span class="o">?</span> <span class="s">&quot;Free&quot;</span> <span class="o">:</span> <span class="s">&quot;Used&quot;</span><span class="p">),</span>
+           <span class="p">(</span><span class="n">p_ufdata</span><span class="o">-&gt;</span><span class="n">records</span><span class="p">[</span><span class="n">u16_i</span><span class="p">].</span><span class="n">status</span> <span class="o">==</span> <span class="n">FREE_STATUS</span> <span class="o">?</span> <span class="s">&quot;n/a&quot;</span> <span class="o">:</span> <span class="n">p_ufdata</span><span class="o">-&gt;</span><span class="n">records</span><span class="p">[</span><span class="n">u16_i</span><span class="p">].</span><span class="n">data</span><span class="p">));</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">doInsert</span><span class="p">(</span><span class="n">UFDATA</span><span class="o">*</span> <span class="n">p_ufdata</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">sz_1</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">uint16_t</span> <span class="n">u16_i</span><span class="p">,</span> <span class="n">u16_j</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u16_i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">u16_i</span> <span class="o">&lt;</span> <span class="n">NUM_RECORDS</span><span class="p">;</span> <span class="n">u16_i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">p_ufdata</span><span class="o">-&gt;</span><span class="n">records</span><span class="p">[</span><span class="n">u16_i</span><span class="p">].</span><span class="n">status</span> <span class="o">==</span> <span class="n">FREE_STATUS</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">u16_j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="k">while</span> <span class="p">(</span><span class="o">*</span><span class="n">sz_1</span><span class="p">)</span> <span class="p">{</span>  <span class="c1">//copy data</span>
+        <span class="n">p_ufdata</span><span class="o">-&gt;</span><span class="n">records</span><span class="p">[</span><span class="n">u16_i</span><span class="p">].</span><span class="n">data</span><span class="p">[</span><span class="n">u16_j</span><span class="p">]</span> <span class="o">=</span> <span class="o">*</span><span class="n">sz_1</span><span class="p">;</span>
+        <span class="n">sz_1</span><span class="o">++</span><span class="p">;</span>
+        <span class="n">u16_j</span><span class="o">++</span><span class="p">;</span>
+      <span class="p">}</span> <span class="c1">//end while</span>
+      <span class="n">p_ufdata</span><span class="o">-&gt;</span><span class="n">records</span><span class="p">[</span><span class="n">u16_i</span><span class="p">].</span><span class="n">data</span><span class="p">[</span><span class="n">u16_j</span><span class="p">]</span> <span class="o">=</span> <span class="o">*</span><span class="n">sz_1</span><span class="p">;</span> <span class="c1">//write null</span>
+      <span class="n">p_ufdata</span><span class="o">-&gt;</span><span class="n">records</span><span class="p">[</span><span class="n">u16_i</span><span class="p">].</span><span class="n">status</span> <span class="o">=</span> <span class="n">USED_STATUS</span><span class="p">;</span> <span class="c1">//mark as used</span>
+      <span class="k">break</span><span class="p">;</span> <span class="c1">//exit if</span>
+    <span class="p">}</span><span class="c1">//end if</span>
+  <span class="p">}</span><span class="c1">//end for</span>
+<span class="p">}</span><span class="c1">//end function</span>
+
+<span class="kt">uint8_t</span> <span class="nf">printMenu</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;1 Format data</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;2 Enter one record</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;3 Delete a record</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;4 Commit data</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;5 Read and print all records</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot; Enter number (1-5): &quot;</span><span class="p">);</span>
+  <span class="k">return</span> <span class="n">inCharEcho</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">doMenu</span><span class="p">()</span> <span class="p">{</span>
+  <span class="kt">uint8_t</span> <span class="n">u8_c</span><span class="p">;</span>
+  <span class="kt">char</span> <span class="n">data</span><span class="p">[</span><span class="n">RECORD_SIZE</span><span class="p">];</span>
+  <span class="kt">uint16_t</span> <span class="n">u16_recnum</span><span class="p">;</span>
+  <span class="n">u8_c</span> <span class="o">=</span> <span class="n">printMenu</span><span class="p">();</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="k">switch</span><span class="p">(</span><span class="n">u8_c</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">case</span> <span class="sc">&#39;1&#39;</span>:
+      <span class="n">doFormat</span><span class="p">(</span><span class="o">&amp;</span><span class="n">fdata</span><span class="p">);</span>
+      <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="sc">&#39;2&#39;</span>:
+      <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Enter string+</span><span class="se">\\</span><span class="s">n (14 chars max): &quot;</span><span class="p">);</span>
+      <span class="n">inStringEcho</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">RECORD_SIZE</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+      <span class="n">doInsert</span><span class="p">(</span><span class="o">&amp;</span><span class="n">fdata</span><span class="p">,</span> <span class="n">data</span><span class="p">);</span>
+      <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="sc">&#39;3&#39;</span>:
+      <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Enter record number+</span><span class="se">\\</span><span class="s">n (0 to 15, decimal): &quot;</span><span class="p">);</span>
+      <span class="n">inStringEcho</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">RECORD_SIZE</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+      <span class="n">sscanf</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="s">&quot;%d&quot;</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span> <span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">u16_recnum</span><span class="p">);</span>
+      <span class="n">doDelete</span><span class="p">(</span><span class="n">u16_recnum</span><span class="p">);</span>
+      <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="sc">&#39;4&#39;</span>:
+      <span class="n">doCommit</span><span class="p">(</span><span class="o">&amp;</span><span class="n">fdata</span><span class="p">);</span>
+      <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="sc">&#39;5&#39;</span>:
+      <span class="n">doRead</span><span class="p">(</span><span class="o">&amp;</span><span class="n">fdata</span><span class="p">);</span>
+      <span class="n">doPrint</span><span class="p">(</span><span class="o">&amp;</span><span class="n">fdata</span><span class="p">);</span>
+      <span class="k">break</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">configBasic</span><span class="p">(</span><span class="n">HELLO_MSG</span><span class="p">);</span>
+  <span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">doMenu</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+  <span class="p">}</span> <span class="c1">//end while</span>
+<span class="p">}</span><span class="c1">//end main</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="i2c_master_reverse_string.c.html" title="i2c_master_reverse_string.c - Master in pair of files that shows a PIC24 I2C master talking to a PIC24 I2C slave"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="ecan_example_fifo_eid.c.html" title="ecan_example_fifo_eid.c - Illustrate CAN transmit, receive"
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

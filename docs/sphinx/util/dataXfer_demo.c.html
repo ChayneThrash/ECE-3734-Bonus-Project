@@ -1,0 +1,191 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>dataXfer_demo.c - A simple demonstration of the data transfer protocol. &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="Utilities" href="../utilities.html" />
+    <link rel="prev" title="dataXfer_echo.c - Demonstrates an echo program which includes usage of the data transfer protocol" href="dataXfer_echo.c.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../utilities.html" title="Utilities"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="dataXfer_echo.c.html" title="dataXfer_echo.c - Demonstrates an echo program which includes usage of the data transfer protocol"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="dataxfer-demo-c-a-simple-demonstration-of-the-data-transfer-protocol">
+<h1>dataXfer_demo.c - A simple demonstration of the data transfer protocol.<a class="headerlink" href="#dataxfer-demo-c-a-simple-demonstration-of-the-data-transfer-protocol" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="cp">#include &quot;pic24_all.h&quot;</span>
+<span class="cp">#include &quot;dataXfer.h&quot;</span>
+
+<span class="c1">/// Indexes of all the variables to be transferred.</span>
+<span class="k">enum</span> <span class="p">{</span> <span class="n">I16_VAL_NDX</span><span class="p">,</span> <span class="n">U16_INDEX_NDX</span><span class="p">,</span> <span class="n">C_NDX</span><span class="p">,</span> <span class="n">C1_NDX</span> <span class="p">};</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">int16_t</span> <span class="n">i16_val</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+  <span class="kt">char</span> <span class="n">c</span><span class="p">;</span>
+  <span class="kt">uint16_t</span> <span class="n">u16_index</span><span class="p">;</span>
+
+  <span class="n">configBasic</span><span class="p">(</span><span class="n">HELLO_MSG</span><span class="p">);</span>
+  <span class="n">initDataXfer</span><span class="p">();</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>All variables received by the PIC must be specified.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">SPECIFY_VAR</span><span class="p">(</span><span class="n">I16_VAL_NDX</span><span class="p">,</span> <span class="n">i16_val</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">,</span> <span class="s">&quot;%hi&quot;</span><span class="p">,</span> <span class="s">&quot;Current sum&quot;</span><span class="p">);</span>
+  <span class="n">SPECIFY_VAR</span><span class="p">(</span><span class="n">U16_INDEX_NDX</span><span class="p">,</span> <span class="n">u16_index</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">,</span> <span class="s">&quot;%hu&quot;</span><span class="p">,</span> <span class="s">&quot;Index of received data&quot;</span><span class="p">);</span>
+  <span class="n">SPECIFY_VAR</span><span class="p">(</span><span class="n">C_NDX</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">,</span> <span class="s">&quot;%c&quot;</span><span class="p">,</span> <span class="s">&quot;Character entered&quot;</span><span class="p">);</span>
+  <span class="n">SPECIFY_VAR</span><span class="p">(</span><span class="n">C1_NDX</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">,</span> <span class="s">&quot;%hu&quot;</span><span class="p">,</span> <span class="s">&quot;Value of character entered&quot;</span><span class="p">);</span>
+
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">sendVar</span><span class="p">(</span><span class="n">I16_VAL_NDX</span><span class="p">);</span> <span class="c1">// Send i16_val to the PC</span>
+    <span class="n">outString</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">Current sum is &quot;</span><span class="p">);</span>
+    <span class="n">outUint16</span><span class="p">(</span><span class="n">i16_val</span><span class="p">);</span>
+    <span class="n">outString</span><span class="p">(</span><span class="s">&quot;. Enter digit to sum (0-9): &quot;</span><span class="p">);</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>Receive one character or variable.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+    <span class="n">u16_index</span> <span class="o">=</span> <span class="n">receiveVar</span><span class="p">(</span><span class="o">&amp;</span><span class="n">c</span><span class="p">);</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>For debug support, send the index and char received.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+    <span class="n">sendVar</span><span class="p">(</span><span class="n">U16_INDEX_NDX</span><span class="p">);</span>
+    <span class="n">sendVar</span><span class="p">(</span><span class="n">C_NDX</span><span class="p">);</span>
+    <span class="n">sendVar</span><span class="p">(</span><span class="n">C1_NDX</span><span class="p">);</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>If it was a character, add it to the sum.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+    <span class="k">if</span> <span class="p">(</span><span class="n">u16_index</span> <span class="o">==</span> <span class="n">CHAR_RECEIVED_INDEX</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">outChar</span><span class="p">(</span><span class="n">c</span><span class="p">);</span>
+      <span class="n">outString</span><span class="p">(</span><span class="s">&quot;  (0x&quot;</span><span class="p">);</span>
+      <span class="n">outUint8Decimal</span><span class="p">(</span><span class="n">c</span><span class="p">);</span>
+      <span class="n">outString</span><span class="p">(</span><span class="s">&quot;) &quot;</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">(</span> <span class="p">(</span><span class="n">c</span> <span class="o">&gt;=</span> <span class="sc">&#39;0&#39;</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">c</span> <span class="o">&lt;=</span> <span class="sc">&#39;9&#39;</span><span class="p">)</span> <span class="p">)</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>A plain char received, so turn it into a number.
+Otherwise, a new total was sent.</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+        <span class="n">i16_val</span> <span class="o">+=</span> <span class="n">c</span> <span class="o">-</span> <span class="sc">&#39;0&#39;</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="n">ASSERT</span><span class="p">(</span><span class="n">u16_index</span> <span class="o">==</span> <span class="n">I16_VAL_NDX</span><span class="p">);</span>
+      <span class="n">outString</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">New total received!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../utilities.html" title="Utilities"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="dataXfer_echo.c.html" title="dataXfer_echo.c - Demonstrates an echo program which includes usage of the data transfer protocol"
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

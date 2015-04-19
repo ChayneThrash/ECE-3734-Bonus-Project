@@ -1,0 +1,175 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>float_bench.c - A simple program that benchmarks float vs u32 operations &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="float_encoding.s" href="float_encoding.s.html" />
+    <link rel="prev" title="div_asm_tests.s" href="div_asm_tests.s.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="float_encoding.s.html" title="float_encoding.s"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="div_asm_tests.s.html" title="div_asm_tests.s"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="float-bench-c-a-simple-program-that-benchmarks-float-vs-u32-operations">
+<h1>float_bench.c - A simple program that benchmarks float vs u32 operations<a class="headerlink" href="#float-bench-c-a-simple-program-that-benchmarks-float-vs-u32-operations" title="Permalink to this headline">¶</a></h1>
+<p>The instruction cycle measurement is done in the simulator,
+this program is not meant to run on hardware since configClock()
+is not included.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+
+<span class="cp">#include &quot;pic24_all.h&quot;</span>
+
+
+
+<span class="kt">float</span> <span class="n">f_a</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span><span class="n">f_b</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span><span class="n">f_c</span><span class="p">[</span><span class="mi">10</span><span class="p">];</span>
+<span class="kt">uint32_t</span> <span class="n">u32_a</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span><span class="n">u32_b</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span><span class="n">u32_c</span><span class="p">[</span><span class="mi">10</span><span class="p">];</span>
+
+<span class="c1">//#define OP +</span>
+<span class="c1">//#define OP *</span>
+<span class="cp">#define OP /</span>
+
+<span class="kt">void</span> <span class="nf">float_op</span> <span class="p">(</span><span class="kt">float</span> <span class="o">*</span><span class="n">ptra</span><span class="p">,</span> <span class="kt">float</span> <span class="o">*</span><span class="n">ptrb</span><span class="p">,</span> <span class="kt">float</span> <span class="o">*</span><span class="n">ptrc</span><span class="p">,</span> <span class="kt">uint8_t</span> <span class="n">u8_cnt</span><span class="p">)</span> <span class="p">{</span>
+
+  <span class="kt">uint8_t</span> <span class="n">u8_i</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u8_i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">&lt;</span> <span class="n">u8_cnt</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="o">*</span><span class="n">ptrc</span> <span class="o">=</span> <span class="o">*</span><span class="n">ptra</span> <span class="n">OP</span> <span class="o">*</span><span class="n">ptrb</span><span class="p">;</span>   <span class="c1">// add contents of two arrays</span>
+    <span class="n">ptra</span><span class="o">++</span><span class="p">;</span>
+    <span class="n">ptrb</span><span class="o">++</span><span class="p">;</span>
+    <span class="n">ptrc</span><span class="o">++</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">uint32_t_op</span> <span class="p">(</span><span class="kt">uint32_t</span> <span class="o">*</span><span class="n">ptra</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="o">*</span><span class="n">ptrb</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="o">*</span><span class="n">ptrc</span><span class="p">,</span> <span class="kt">uint8_t</span> <span class="n">u8_cnt</span><span class="p">)</span> <span class="p">{</span>
+
+  <span class="kt">uint8_t</span> <span class="n">u8_i</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u8_i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">&lt;</span> <span class="n">u8_cnt</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="o">*</span><span class="n">ptrc</span> <span class="o">=</span> <span class="o">*</span><span class="n">ptra</span> <span class="n">OP</span> <span class="o">*</span><span class="n">ptrb</span><span class="p">;</span>   <span class="c1">// add contents of two arrays</span>
+    <span class="n">ptra</span><span class="o">++</span><span class="p">;</span>
+    <span class="n">ptrb</span><span class="o">++</span><span class="p">;</span>
+    <span class="n">ptrc</span><span class="o">++</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+
+  <span class="n">f_a</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">f_b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">=</span> <span class="mf">66666.6666666</span><span class="p">;</span>
+  <span class="n">f_a</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">f_b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">=</span> <span class="mf">66666.6666666</span><span class="p">;</span>
+  <span class="n">f_a</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">f_b</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">=</span> <span class="mf">66666.6666666</span><span class="p">;</span>
+  <span class="n">f_a</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">f_b</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">=</span> <span class="mf">66666.6666666</span><span class="p">;</span>
+  <span class="n">f_a</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">f_b</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">=</span> <span class="mf">66666.6666666</span><span class="p">;</span>
+  <span class="n">f_a</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">=</span> <span class="n">f_b</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">=</span> <span class="mf">66666.6666666</span><span class="p">;</span>
+  <span class="n">f_a</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="n">f_b</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="o">=</span> <span class="mf">66666.6666666</span><span class="p">;</span>
+  <span class="n">f_a</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="o">=</span> <span class="n">f_b</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="o">=</span> <span class="mf">66666.6666666</span><span class="p">;</span>
+  <span class="n">f_a</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span> <span class="o">=</span> <span class="n">f_b</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="o">=</span> <span class="mf">66666.6666666</span><span class="p">;</span>
+  <span class="n">f_a</span><span class="p">[</span><span class="mi">9</span><span class="p">]</span> <span class="o">=</span> <span class="n">f_b</span><span class="p">[</span><span class="mi">9</span><span class="p">]</span><span class="o">=</span> <span class="mf">66666.6666666</span><span class="p">;</span>
+  <span class="n">f_b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">=</span> <span class="mf">33333.333333333</span><span class="p">;</span>
+  <span class="n">f_b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">=</span> <span class="mf">33333.333333333</span><span class="p">;</span>
+  <span class="n">f_b</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">=</span> <span class="mf">33333.333333333</span><span class="p">;</span>
+  <span class="n">f_b</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">=</span> <span class="mf">33333.333333333</span><span class="p">;</span>
+  <span class="n">f_b</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">=</span> <span class="mf">33333.333333333</span><span class="p">;</span>
+  <span class="n">f_b</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">=</span> <span class="mf">33333.333333333</span><span class="p">;</span>
+  <span class="n">f_b</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="o">=</span> <span class="mf">33333.333333333</span><span class="p">;</span>
+  <span class="n">f_b</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="o">=</span> <span class="mf">33333.333333333</span><span class="p">;</span>
+  <span class="n">f_b</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="o">=</span> <span class="mf">33333.333333333</span><span class="p">;</span>
+  <span class="n">f_b</span><span class="p">[</span><span class="mi">9</span><span class="p">]</span><span class="o">=</span> <span class="mf">33333.333333333</span><span class="p">;</span>
+
+  <span class="n">u32_a</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">u32_b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">=</span> <span class="mi">242142</span><span class="p">;</span>
+  <span class="n">u32_a</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">u32_b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">=</span> <span class="mi">242142</span><span class="p">;</span>
+  <span class="n">u32_a</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">u32_b</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">=</span> <span class="mi">242142</span><span class="p">;</span>
+  <span class="n">u32_a</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">u32_b</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">=</span> <span class="mi">242142</span><span class="p">;</span>
+  <span class="n">u32_a</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">u32_b</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">=</span> <span class="mi">242142</span><span class="p">;</span>
+  <span class="n">u32_a</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">=</span> <span class="n">u32_b</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">=</span> <span class="mi">242142</span><span class="p">;</span>
+  <span class="n">u32_a</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="n">u32_b</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="o">=</span> <span class="mi">242142</span><span class="p">;</span>
+  <span class="n">u32_a</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="o">=</span> <span class="n">u32_b</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="o">=</span> <span class="mi">242142</span><span class="p">;</span>
+  <span class="n">u32_a</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span> <span class="o">=</span> <span class="n">u32_b</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="o">=</span> <span class="mi">242142</span><span class="p">;</span>
+  <span class="n">u32_a</span><span class="p">[</span><span class="mi">9</span><span class="p">]</span> <span class="o">=</span> <span class="n">u32_b</span><span class="p">[</span><span class="mi">9</span><span class="p">]</span><span class="o">=</span> <span class="mi">2421422</span><span class="p">;</span>
+
+
+  <span class="n">float_op</span><span class="p">(</span><span class="n">f_a</span><span class="p">,</span><span class="n">f_b</span><span class="p">,</span><span class="n">f_c</span><span class="p">,</span><span class="mi">10</span><span class="p">);</span>
+  <span class="n">uint32_t_op</span><span class="p">(</span><span class="n">u32_a</span><span class="p">,</span><span class="n">u32_b</span><span class="p">,</span><span class="n">u32_c</span><span class="p">,</span><span class="mi">10</span><span class="p">);</span>
+
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+  <span class="p">}</span> <span class="c1">// end while (1)</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>End program</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="float_encoding.s.html" title="float_encoding.s"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="div_asm_tests.s.html" title="div_asm_tests.s"
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

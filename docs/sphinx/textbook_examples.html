@@ -1,0 +1,378 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Textbook examples &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="index.html" />
+    <link rel="next" title="mptst_word.s - translation of 16-bit C aritmetic to assembly" href="chap03/mptst_word.s.html" />
+    <link rel="prev" title="Table of Contents" href="contents.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="chap03/mptst_word.s.html" title="mptst_word.s - translation of 16-bit C aritmetic to assembly"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="contents.html" title="Table of Contents"
+             accesskey="P">previous</a> |</li>
+        <li><a href="contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="textbook-examples">
+<h1>Textbook examples<a class="headerlink" href="#textbook-examples" title="Permalink to this headline">¶</a></h1>
+<p>This page gives example PIC24 code accompanying the textbook titled <a class="reference external" href="http://www.reesemicro.com">&#8220;Microcontrollers: From Assembly to C with the PIC24 Family&#8221;</a> by R. Reese, B. Jones and J.W. Bruce published by Cengage Learning in December 2008.</p>
+<p>The next section discussing using the example code, while the <a class="reference internal" href="#example-code-directory">example code directory</a> lists all available examples.</p>
+<div class="section" id="using-the-example-code">
+<h2>Using the example code<a class="headerlink" href="#using-the-example-code" title="Permalink to this headline">¶</a></h2>
+<p>First, make sure you&#8217;ve read the <a class="reference external" href="http://www.reesemicro.com/Home/pic24-software-library-collection/getting-started">getting started guide</a>, insuring that your hardware and software are correctly configured.</p>
+<p>These examples have minimal reliance on the libraries shipped with the PIC24 compiler, and instead use libraries that have been developed by the authors. The new libraries are meant to be more friendly to programmers who are new to the PIC24 Family, as this material and code examples are used in an introductory microprocessors class at Mississippi State University.</p>
+<p>Most of the examples are meant for a reference dsPIC33EP128GP502 system. The projects all have a custom linker file intended for use with a serial bootloader - if you want generated hex files to be compatible with the PICKit 3 programmer then delete the linker file from the MPLAB X project.</p>
+<p>If you have a different PIC24 Family member, simply change the target device in the MPLAB to that device. When you compile the files, you will get warnings that the internal oscillator with PLL is being used, and that the default configuration bit settings are being used.</p>
+<p>To change clock options, see the documentation in <a class="reference external" href="../pic24__clockfreq_8c.html">common/pic24_clockfreq.c</a> and <a class="reference external" href="../pic24__clockfreq_8h.html">include/pic24_clockfreq.h</a>  To change config bits, see the documentation on <a class="reference external" href="../pic24__configbits_8c.html">common/pic24_configbits.c</a></p>
+<p>All of the examples assume a serial port using UART1; our reference system uses pins RP10 (RX) and RP11 (TX) with a default baud rate of 230,400 baud. To change these assignments, edit the function called configUART1() in <a class="reference external" href="../pic24__uart_8h.html">common/pic24_uart.c</a>.  To change the default baudrate, edit the <tt class="docutils literal"><span class="pre">#define</span> <span class="pre">DEFAULT_BAUDRATE</span></tt> in <a class="reference external" href="../pic24__libconfig_8h.html">include/pic24_libconfig.h</a> (this file includes all of the macros for configuring user-defineable behavior for library functions).</p>
+<p>If the end-of-line (EOL) output behavior is not correct for the serial terminal program that you are using (i.e, printed new lines do not return to the left edge of the screen), then you can change this by selecting an appropriate value for the <tt class="docutils literal"><span class="pre">SERIAL_EOL_DEFAULT</span></tt> macro contained in <a class="reference external" href="../pic24__libconfig_8h.html">include/pic24_libconfig.h</a>. By default, the library signals an EOL using a line feed only.</p>
+<p>Our examples also assume an LED tied to port RB15 - this is used as a &#8216;heartbeat&#8217; and is blinked by our examples when waiting for input. You can reassign this to another port (see <tt class="docutils literal"><span class="pre">HB_LED</span></tt>) or remove it entirely (see <tt class="docutils literal"><span class="pre">USE_HEARTBEAT</span></tt>) by editing <a class="reference external" href="../pic24__libconfig_8h.html">include/pic24_libconfig.h</a>.</p>
+<p>The best project to start with is <a class="reference internal" href="chap08/reset.c.html"><em>reset.c</em></a> - this just assumes basic serial port functionality.</p>
+</div>
+<div class="section" id="example-code-directory">
+<h2>Example code directory<a class="headerlink" href="#example-code-directory" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="chapter-3-translation-from-c-arithmetic-to-assembly">
+<h3>Chapter 3: translation from <em>C</em> arithmetic to assembly<a class="headerlink" href="#chapter-3-translation-from-c-arithmetic-to-assembly" title="Permalink to this headline">¶</a></h3>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="chap03/mptst_word.s.html">mptst_word.s - translation of 16-bit <em>C</em> aritmetic to assembly</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="chap03/mptst_byte.s.html">mptst_byte.s - translation of 8-bit <em>C</em> aritmetic to assembly</a><ul class="simple">
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="chapter-4-unsigned-8-16-bit-arithmetic">
+<h3>Chapter 4: Unsigned 8/16-bit arithmetic<a class="headerlink" href="#chapter-4-unsigned-8-16-bit-arithmetic" title="Permalink to this headline">¶</a></h3>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="chap04/nsc.s.html">nsc.s - Implement the Number Sequencing Computering in PIC24 assembly.</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="chapter-6-pointers-and-subroutines">
+<h3>Chapter 6: Pointers and subroutines<a class="headerlink" href="#chapter-6-pointers-and-subroutines" title="Permalink to this headline">¶</a></h3>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="chap06/countOnes.c.html">countOnes.c - Counts the number of 1 bits in u16_v</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap06/countOnes_assem.s.html">countOnes_assem.s - Counts the number of 1 bits in a word</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap06/fib.c.html">fib.c - A recursive subroutine example to compute a Fibonnachi number</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap06/fib_register.s.html">fib_register.s - A recursive subroutine example to compute a Fibonnachi number</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap06/fib_stack.s.html">fib_stack.s - A recursive subroutine example using the stack to compute a Fibonnachi number</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap06/psv_intarray.s.html">psv_intarray.s - Initialize array from program memory (PIC24H/dsPIC33F)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap06/psv_intarray_24E33E.s.html">psv_intarray-24E33E.s - Initialize array from program memory (PIC24E/dsPIC33E)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap06/psv_upcase.s.html">psv_upcase.s - Initialize string from program memory (PIC24H/dsPIC33F)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap06/psv_upcase_24E33E.s.html">psv_upcase_24E33E.s - Initialize string from program memory (PIC24E/dsPIC33E)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap06/swapU32.s.html">swapU32.s - Swap two U32 values referenced by a pointer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap06/upcase.s.html">upcase.s - Change a string to uppercase</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap06/upcase_cversion.c.html">upcase_cversion.c - Change a string to uppercase</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="chapter-7-advanced-assembly-language-higher-math">
+<h3>Chapter 7: Advanced assembly language - higher math<a class="headerlink" href="#chapter-7-advanced-assembly-language-higher-math" title="Permalink to this headline">¶</a></h3>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="chap07/aschex2byte.c.html">aschex2byte.c</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap07/aschex2byte_asm.s.html">aschex2byte_asm.s</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap07/bcd_test.s.html">bcd_test.s</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap07/byte2aschex.c.html">bytes2aschex.c</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap07/byte2aschex_asm.s.html">bytes2aschex_asm.s</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap07/div_asm_tests.s.html">div_asm_tests.s</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap07/float_bench.c.html">float_bench.c - A simple program that benchmarks float vs u32 operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap07/float_encoding.s.html">float_encoding.s</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap07/mult_32x32_uns.s.html">mult_32x32_uns - Demonstrate unsigned 32 bit multiplication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap07/mult_asm_tests.s.html">mult_asm_tests - test some multiply combinations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap07/sat_add.s.html">sat_add.c - Demonstrate saturating addition</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="chapter-8-initial-startup-parallel-port-examples">
+<h3>Chapter 8: initial startup, parallel port examples<a class="headerlink" href="#chapter-8-initial-startup-parallel-port-examples" title="Permalink to this headline">¶</a></h3>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="chap08/ledflash_nomacros.c.html">ledflash_nomacros.c - Flashes an LED, does not use I/O macros.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap08/ledflash.c.html">ledflash.c - Flashes an LED, uses I/O macros.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap08/echo.c.html">echo.c - Inputs chararacters from UART RX1, echos back chars+1.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap08/asm_echo.s.html">asm_echo.s &#8211; Demonstrates calling C from assembly</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="chap08/reset.c.html">reset.c - Demonstrates software reset, idle, sleep, watchdog timer operation.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap08/ledtoggle.c.html">ledtoggle.c - Uses an FSM approach to toggle an LED whenever a pushbutton input is pressed and released.</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="chap08/ledsw1.c.html">ledsw1.c - Demonstrates using a FSM approach for a LED/switch IO problem.</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="chap08/lcd4bit.c.html">lcd4bit.c - Character LCD interface example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap08/lcd4bit_4lines.c.html">lcd4bit_4lines.c - Demonstrates a 4-line 20x4 Character LCD</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="chapter-9-interrupts-simple-timer-usage">
+<h3>Chapter 9: interrupts, simple timer usage<a class="headerlink" href="#chapter-9-interrupts-simple-timer-usage" title="Permalink to this headline">¶</a></h3>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="chap09/trap_test.c.html">trap_test.c - Code which causes a math error (divide by zero) trap</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap09/trap_test_handled.c.html">trap_test_handled.c - contains an ISR which handles the math error (divide by zero)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap09/change_wakeup.c.html">change_wakeup.c - wake from sleep using a change notification interrupt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap09/change_latency.c.html">change_latency.c - measures ISR latency using a change notification interrupt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap09/int1_wakeup.c.html">int1_wakeup.c - Uses INT1 to wake from sleep mode.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap09/squarewave.c.html">squarewave.c - Generates a square wave using timer 2 and an ISR.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap09/filt_test.c.html">filt_test.c - test an extern low-pass RC filter effectiveness by generating a pulse train that is read by another port</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap09/softfilt_test.c.html">softfilt_test.c - Implements a software filter for input pulses less than a specified duration.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap09/ledsw1_sampling.c.html">ledsw1_sampling.c - Example of implementing a FSM using intput sampling</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="chap09/ledsw1_cn.c.html">ledsw1_cn.c - Example of implementing a FSM using a timer and change notification interrupt.</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="chap09/ledsw1_cn_revised.c.html">ledsw1_cn_revised.c - Example of implementing a FSM using a timer and change notification interrupt.</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="chap09/rot_enc.c.html">rot_enc.c - A 2-bit incremental Gray code rotary encoder example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap09/keypad.c.html">keypad.c - Implements a 4x3 key scanned keypad interface.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap09/rot_enc_trace.c.html">rot_enc_trace.c - Demonstrates use of an ISR trace buffer for capturing the states of a rotary encoder.</a></li>
+</ul>
+</div>
+<div class="section" id="extras">
+<h4>Extras<a class="headerlink" href="#extras" title="Permalink to this headline">¶</a></h4>
+<p>These programs demonstrate related concepts, but are not directly discussed in the textbook.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="chap09/change_bounce.c.html">change_bounce.c - uses a change notification interrupt to detect switch bounce</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap09/change_test.c.html">change_test.c - demos a change notification interrupt using an input pushbutton</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap09/int0_bounce.c.html">int0_bounce.c - use the INT0 interrupt to detect switch bounce.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap09/int0_wakeup.c.html">int0_wakeup.c - uses INT0 to wake from sleep mode.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap09/int1_bounce.c.html">int1_bounce.c - use the INT1 interrupt to detect switch bounce.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap09/ledflash_timer.c.html">ledflash_timer.c - uses a periodic timer interrupt to flash an LED.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap09/ledtoggle_timer.c.html">ledtoggle_timer.c - toggle an LED using a periodic interrupt to poll the switch input</a><ul class="simple">
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="section" id="chapter-10-uart-spi-i2c">
+<h3>Chapter 10 (UART, SPI, I2C)<a class="headerlink" href="#chapter-10-uart-spi-i2c" title="Permalink to this headline">¶</a></h3>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="chap10/soft_uart.c.html">soft_uart.c - Demonstrates software-driven UART TX/RX using PIO pins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap10/reverse_string.c.html">reverse_string.c - Inputs a string, outputs the reverse</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap10/mcp41xxx_spi_pot.c.html">mcp41xxx_spi_pot.c -  SPI example: PIC24 uC in Master mode to Microchip MCP41xxx Digital Potentiometer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap10/ds1722_spi_tempsense.c.html">ds1722_spi_tempsense.c - SPI example: PIC24 uC in Master mode to Maxim DS1722 Digital Thermometer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap10/spi_master_revstring.c.html">spi_master_revstring.c - SPI master uses slave to reverse strings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap10/spi_slave_revstring.c.html">spi_slave_revstring.c - SPI slave reverse a string provided by a master</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap10/ds1621_i2c.c.html">ds1621_i2c.c - PIC24 uC in Master mode to Maxim DS1621 Digital Thermometer using I2C</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap10/ds1631_i2c.c.html">ds1631_i2c.c - PIC24 uC in Master mode to Maxim DS1631 Digital Thermometer using I2C</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap10/mcp24lc515_i2c_eeprom.c.html">mcp24lc515_i2c_eeprom.c - PIC24 uC in Master mode to Microchip 24LC515 EEPROM using I2C</a></li>
+</ul>
+</div>
+<div class="section" id="id1">
+<h4>Extras<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h4>
+<p>These programs demonstrate related concepts, but are not directly discussed in the textbook.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="chap10/reverse_string_stdio.c.html">reverse_string_stdio.c - Inputs a string using <tt class="docutils literal"><span class="pre">scanf</span></tt>, outputs the reverse</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap10/stdio_test.c.html">stdio_test.c - demonstrates use of &#8216;scanf&#8217; forms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap10/uart_wakeup.c.html">uart_wakeup.c - Demonstrates wakeup from sleep using the UART</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="section" id="chapter-11-data-conversion-adc-dac">
+<h3>Chapter 11: Data Conversion - ADC, DAC<a class="headerlink" href="#chapter-11-data-conversion-adc-dac" title="Permalink to this headline">¶</a></h3>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="chap11/adc2pots1.c.html">adc2pots1.c - Demonstrates 2-channel manual sampling with the ADC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap11/adc7scan1.c.html">adc7scan1.c - Samples 7 channels sequentially with automatic channel scanning (only for PIC24 CPUs without DMA)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap11/adc7scan2.c.html">adc7scan2.c - Above plus uses double buffering (only for PIC24 CPUs without DMA)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap11/adc4simul.c.html">adc4simul.c - Simultaneous sampling of 4 channels (only for PIC24 CPUs without DMA)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap11/adc_spidac_test.c.html">adc_spidac_test.c - Demonstrates reading the internal ADC in 12-bit mode and then sending the upper 8 bits to an external 8-bit SPI DAC (MAXIM 548A)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap11/adc_test.c.html">adc_test.c - Demonstrates reading the internal ADC in 10-bit mode and converting it to a voltage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap11/adc_test_12bit.c.html">adc_test_12bit.c - Demonstrates reading the internal ADC in 12-bit mode and converting it to a voltage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap11/adc7scan1_dma_scatter_gather_1.c.html">adc7scan1_dma_scatter_gather_1.c - Samples 7 channels sequentially with automatic channel scanning in scatter/gather mode</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap11/adc7scan1_dma_conv_order.c.html">adc7scan1_dma_conv_order.c - Samples 7 channels sequentially with automatic channel scanning in ordered mode</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap11/adc4simul_dma.c.html">adc4simul_dma.c - Simultaneous sampling of 4 channels (only for PIC24 CPUs with DMA)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap11/dac_r2r.c.html">dac_r2r.c - Create a sine wave using a DAC</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="chapter-12-timer-coverage-pwm-input-capture-output-compare-time-keeping">
+<h3>Chapter 12: Timer coverage - PWM, input capture, output compare, time keeping<a class="headerlink" href="#chapter-12-timer-coverage-pwm-input-capture-output-compare-time-keeping" title="Permalink to this headline">¶</a></h3>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="chap12/incap_freqmeasure.c.html">incap_freqmeasure.c - Uses IC1 to measure period, uses averaging mode.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap12/incap_switch_pulse_measure.c.html">incap_switch_pulse_measure.c - Uses 16-bit input capture to measure pulse width</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap12/ir_biphase_decode.c.html">ir_biphase_decode.c - Decodes IR bi-phase bitstream from IR remote control</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap12/manual_switch_pulse_measure.c.html">manual_switch_pulse_measure.c - Uses 16-bit timer to measure pulse width</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap12/timer32bit_switch_pulse_measure.c.html">timer32bit_switch_pulse_measure.c - Uses 32-bit timer to measure pulse width</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap12/outcompare_contpulse.c.html">outcompare_contpulse.c - Generate an asymmetric square wave using output compare (OC1), continuous pulse mode</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap12/outcompare_squarewave.c.html">outcompare_squarewave.c - generates a square wave using output compare (PIC24F/H/E families)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap12/outcompare_squarewave_24e.c.html">outcompare_squarewave_24e.c - generates a square wave using output compare (dsPIC33E/PIC24E only)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap12/outputcompare_oneservo.c.html">outputcompare_oneservo.c - Demonstrates servo control using output compare for PWM. Pulse width is set by the ADC input.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap12/outputcompare_multiservo.c.html">outcompare_multiservo.c - Demonstrates pulse width modulation using four digital outputs and the OC1 module to create four PWM outputs for hobby servos.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap12/ledpwm.c.html">ledpwm.c - Demonstrates pulse width modulation by controlling the intensity of an LED. The ADC input value on AN0 is used to vary the PWM period.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap12/pwm_dac.c.html">pwm_dac.c - Demonstrates a PWM DAC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap12/rtcc.c.html">rtcc.c - Demonstrates use of the Real Time Clock Calendar Module with an external 32.768 kHZ crystal for timekeeping.</a></li>
+</ul>
+</div>
+<div class="section" id="id2">
+<h4>Extras<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h4>
+<p>These programs demonstrate related concepts, but are not directly discussed in the textbook.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="chap12/incap_32bit_switch_pulse_measure.c.html">incap_32bit_switch_pulse_measure.c - Uses IC1,IC2 in cascade mode to measure pulse width</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap12/ledpwm_bullymon.c.html">ledpwm.c - Demonstrates pulse width modulation by controlling the intensity of an LED. The ADC input value on AN0 is used to vary the PWM period.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap12/pwm_dac.c.html">pwm_dac.c - Demonstrates a PWM DAC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap12/timer1_sosc.c.html">time1_sosc.c - Demonstrates use of Timer1 with a secondary oscillator.</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="section" id="chapter-13-advanced-topics-dma-ecan-i2c-slave-flash-programming-comparator">
+<h3>Chapter 13: Advanced topics - DMA, ECAN, I2C slave, flash programming, comparator<a class="headerlink" href="#chapter-13-advanced-topics-dma-ecan-i2c-slave-flash-programming-comparator" title="Permalink to this headline">¶</a></h3>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="chap13/comparator_example.c.html">comparator_example.c - Illustrates a simple use of the comparator module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap13/dma_example.c.html">dma_example.c - Uses DMA in ping-pong mode to capture data from the UART, write it to the 24LC515 EEPROM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap13/ecan_example_nofifo.c.html">ecan_example_nofifo.c - Illustrate CAN transmit, receive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap13/ecan_example_fifo.c.html">ecan_example_fifo.c - Illustrate CAN transmit, receive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap13/ecan_example_fifo_eid.c.html">ecan_example_fifo_eid.c - Illustrate CAN transmit, receive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap13/flash_example.c.html">flash_example.c - Illustrates run time self programming of the flash memory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap13/i2c_master_reverse_string.c.html">i2c_master_reverse_string.c - Master in pair of files that shows a PIC24 I2C master talking to a PIC24 I2C slave</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap13/i2c_slave_reverse_string.c.html">i2c_slave_reverse_string.c - Slave in pair of files that shows a PIC24 I2C master talking to a PIC24 I2C slave</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap13/i2c_multmaster_rstring.c.html">i2c_multmaster_rstring.c - Two PIC24 uCs communicate with each other over I2C, acting both as master and slave devices</a></li>
+</ul>
+</div>
+<div class="section" id="id3">
+<h4>Extras<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h4>
+<p>These programs demonstrate related concepts, but are not directly discussed in the textbook.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="chap13/simple_flash_example.c.html">simple_flash_example.c</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="section" id="chapter-14-esos-examples">
+<h3>Chapter 14: ESOS examples<a class="headerlink" href="#chapter-14-esos-examples" title="Permalink to this headline">¶</a></h3>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="chap14/esos_skel.c.html">esos_skel.c - basic ESOS template</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap14/app_flashled.c.html">app_flashled.c - flash an LED</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap14/app_echo1.c.html">app_echo1.c - ESOS version of the echo.c program</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap14/app_reverse.c.html">app_reverse.c - demonstrates a user task that reverses a string</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap14/app_timerLEDecho.c.html">app_timerLEDecho.c - flash an LED using a software timer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap14/app_semaphore1.c.html">app_semaphore1.c - demonstrates use of semaphores for signaling synchronization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap14/app_semaphore2.c.html">app_semaphore2.c - demonstrates rendezvous synchronization with semaphores</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap14/app_childtask.c.html">app_childtask.c - demonstrates child tasks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap14/app_irqs.c.html">app_irqs.c - demostrates IRQ handling in ESOS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap14/app_ds1631.c.html">app_ds1631.c - I2C example using the DS1631</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap14/app_ds1722.c.html">app_ds1722.c - SPI example using the DS1722</a></li>
+</ul>
+</div>
+<div class="section" id="id4">
+<h4>Extras<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h4>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="chap14/app_test1.c.html">app_test1.c - Use semaphores for inter-task synchronization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap14/app_ds1631_msg.c.html">app_ds1631_msg.c</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap14/app_mailA.c.html">app_mailA.c</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap14/app_mailB.c.html">app_mailB.c</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap14/app_mailC.c.html">app_mailC.c</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap14/app_mailD.c.html">app_mailD.c</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="section" id="examples-converted-to-be-compatible-with-the-explorer-16-100-pin-demo-board">
+<h3>Examples converted to be compatible with the Explorer-16, 100-pin demo board<a class="headerlink" href="#examples-converted-to-be-compatible-with-the-explorer-16-100-pin-demo-board" title="Permalink to this headline">¶</a></h3>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="explorer16_100p/reset.c.html">reset.c - Demonstrates software reset, idle, sleep, watchdog timer operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="explorer16_100p/lcd4bit.c.html">lcd4bit.c - Character LCD interface example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="explorer16_100p/adc_test.c.html">adc_test.c - Demonstrates reading the internal ADC in 10-bit mode and converting it to a voltage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="explorer16_100p/timer1_sosc.c.html">rtcc.c - Demonstrates using the secondary oscillator with a 32768 Hz oscillator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="explorer16_100p/rtcc.c.html">rtcc.c - Demonstrates use of the Real Time Clock Calendar Module with an external 32.768 kHZ crystal for timekeeping.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="explorer16_100p/mcp25lc256_spi_eeprom.c.html">mcp25lc256_spi_eeprom.c - Demonstrate SPI usage</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="examples-using-the-data-transfer-protocol">
+<h3>Examples using the <a class="reference external" href="../data_xfer.html">data transfer protocol</a><a class="headerlink" href="#examples-using-the-data-transfer-protocol" title="Permalink to this headline">¶</a></h3>
+<p>The following programs use the data transfer protocol, providing working examples of its usage.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="util/dataXfer_echo.c.html">dataXfer_echo.c - Demonstrates an echo program which includes usage of the data transfer protocol</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util/dataXfer_demo.c.html">dataXfer_demo.c - A simple demonstration of the data transfer protocol.</a></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="chap03/mptst_word.s.html" title="mptst_word.s - translation of 16-bit C aritmetic to assembly"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="contents.html" title="Table of Contents"
+             >previous</a> |</li>
+        <li><a href="contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

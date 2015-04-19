@@ -1,0 +1,142 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>manual_switch_pulse_measure.c - Uses 16-bit timer to measure pulse width &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="timer32bit_switch_pulse_measure.c - Uses 32-bit timer to measure pulse width" href="timer32bit_switch_pulse_measure.c.html" />
+    <link rel="prev" title="ir_biphase_decode.c - Decodes IR bi-phase bitstream from IR remote control" href="ir_biphase_decode.c.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="timer32bit_switch_pulse_measure.c.html" title="timer32bit_switch_pulse_measure.c - Uses 32-bit timer to measure pulse width"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="ir_biphase_decode.c.html" title="ir_biphase_decode.c - Decodes IR bi-phase bitstream from IR remote control"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="manual-switch-pulse-measure-c-uses-16-bit-timer-to-measure-pulse-width">
+<h1>manual_switch_pulse_measure.c - Uses 16-bit timer to measure pulse width<a class="headerlink" href="#manual-switch-pulse-measure-c-uses-16-bit-timer-to-measure-pulse-width" title="Permalink to this headline">¶</a></h1>
+<p>16-bit Timer2 example: Watches an I/O pin for a low true pulse, records
+timer value on falling edge, records timer value on rising edge, and uses
+the difference (delta) of these values to compute the low true pulse width.
+Assumes that the pulse width does not exceed the maximum timeout value for
+configured timer. To configure this example to run with an external 8 MHz crystal for
+for a FCY=40MHz, define the C preprocessor macro: CLOCK_CONFIG=PRIPLL_8MHzCrystal_40MHzFCY
+and have an external crysal + 2 capacitors on the OSC1/OSC2 pins.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+
+<span class="cp">#include &quot;pic24_all.h&quot;</span>
+<span class="cp">#include &lt;stdio.h&gt;</span>
+
+<span class="cm">/** \file</span>
+<span class="cm"> * Measures the pulse width of a pushbutton switch using Timer2 without input capture.</span>
+<span class="cm"> * CLOCK_CONFIG=PRIPLL_8MHzCrystal_40MHzFCY is defined in the MPLAB project.</span>
+<span class="cm"> * Remove this macro if you wish to use the internal oscillator.</span>
+<span class="cm">*/</span>
+
+
+<span class="kt">void</span>  <span class="nf">configTimer2</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">T2CON</span> <span class="o">=</span> <span class="n">T2_OFF</span> <span class="o">|</span> <span class="n">T2_IDLE_CON</span> <span class="o">|</span> <span class="n">T2_GATE_OFF</span>
+          <span class="o">|</span> <span class="n">T2_32BIT_MODE_OFF</span>
+          <span class="o">|</span> <span class="n">T2_SOURCE_INT</span>
+          <span class="o">|</span> <span class="n">T2_PS_1_256</span> <span class="p">;</span>   <span class="c1">//at 40 MHz, approx 420 ms period, 1 tick = 6.4 us</span>
+  <span class="n">PR2</span> <span class="o">=</span> <span class="mh">0xFFFF</span><span class="p">;</span>                    <span class="c1">//maximum period</span>
+  <span class="n">TMR2</span>  <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>                       <span class="c1">//clear timer2 value</span>
+  <span class="n">_T2IF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>                       <span class="c1">//clear interrupt flag</span>
+  <span class="n">T2CONbits</span><span class="p">.</span><span class="n">TON</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>               <span class="c1">//turn on the timer</span>
+<span class="p">}</span>
+
+<span class="c1">/// Switch1 configuration</span>
+<span class="kr">inline</span> <span class="kt">void</span> <span class="nf">CONFIG_SW1</span><span class="p">()</span>  <span class="p">{</span>
+  <span class="n">CONFIG_RB13_AS_DIG_INPUT</span><span class="p">();</span>     <span class="c1">//use RB13 for switch input</span>
+  <span class="n">ENABLE_RB13_PULLUP</span><span class="p">();</span>           <span class="c1">//enable the pullup</span>
+<span class="p">}</span>
+<span class="cp">#define SW1              _RB13  </span><span class="c1">//switch state</span>
+<span class="cp">#define SW1_PRESSED()   SW1==0  </span><span class="c1">//switch test</span>
+<span class="cp">#define SW1_RELEASED()  SW1==1  </span><span class="c1">//switch test</span>
+
+
+<span class="kt">int</span> <span class="nf">main</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">uint16_t</span> <span class="n">u16_start</span><span class="p">,</span> <span class="n">u16_delta</span><span class="p">;</span>
+  <span class="kt">uint32_t</span> <span class="n">u32_pulseWidth</span><span class="p">;</span>
+  <span class="n">configBasic</span><span class="p">(</span><span class="n">HELLO_MSG</span><span class="p">);</span>
+  <span class="n">CONFIG_SW1</span><span class="p">();</span>    <span class="c1">//use RB13</span>
+  <span class="n">configTimer2</span><span class="p">();</span>
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">outString</span><span class="p">(</span><span class="s">&quot;Press button...&quot;</span><span class="p">);</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">SW1_RELEASED</span><span class="p">())</span><span class="n">doHeartbeat</span><span class="p">();</span>
+    <span class="n">u16_start</span> <span class="o">=</span> <span class="n">TMR2</span><span class="p">;</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">SW1_PRESSED</span><span class="p">())</span><span class="n">doHeartbeat</span><span class="p">();</span>
+    <span class="n">u16_delta</span> <span class="o">=</span> <span class="n">TMR2</span> <span class="o">-</span> <span class="n">u16_start</span><span class="p">;</span>  <span class="c1">//works because using maximum PR2 value</span>
+    <span class="n">u32_pulseWidth</span> <span class="o">=</span> <span class="n">ticksToUs</span><span class="p">((</span><span class="kt">uint32_t</span><span class="p">)</span> <span class="n">u16_delta</span><span class="p">,</span><span class="n">getTimerPrescale</span><span class="p">(</span><span class="n">T2CONbits</span><span class="p">));</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot; %ld us</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="n">u32_pulseWidth</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="timer32bit_switch_pulse_measure.c.html" title="timer32bit_switch_pulse_measure.c - Uses 32-bit timer to measure pulse width"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="ir_biphase_decode.c.html" title="ir_biphase_decode.c - Decodes IR bi-phase bitstream from IR remote control"
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

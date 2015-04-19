@@ -1,0 +1,119 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>SCons_bootloader.py - Build the bootloader &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="index.html" />
+    <link rel="up" title="SConstruct.py - Build all libraries and examples over many chips" href="SConstruct.py.html" />
+    <link rel="next" title="SCons_build.py - Build all libraries and examples" href="SCons_build.py.html" />
+    <link rel="prev" title="SConstruct.py - Build all libraries and examples over many chips" href="SConstruct.py.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="SCons_build.py.html" title="SCons_build.py - Build all libraries and examples"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="SConstruct.py.html" title="SConstruct.py - Build all libraries and examples over many chips"
+             accesskey="P">previous</a> |</li>
+        <li><a href="contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="utilities.html" >Utilities</a> &raquo;</li>
+          <li><a href="SConstruct.py.html" accesskey="U">SConstruct.py - Build all libraries and examples over many chips</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="scons-bootloader-py-build-the-bootloader">
+<h1>SCons_bootloader.py - Build the bootloader<a class="headerlink" href="#scons-bootloader-py-build-the-bootloader" title="Permalink to this headline">¶</a></h1>
+<p>This builds the bootloader for a given configuration. It should be invoked
+from the main SConstruct.py script.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+import os
+Import(&#39;env bin2hex&#39;)
+
+## Inform SCons about the dependencies in the template-based files
+SConscript(&#39;templates/SConscript.py&#39;, &#39;env&#39;)
+
+targetName = &#39;p${MCU}_${HW}_bootloader&#39;
+</pre></div>
+</div>
+<p>Compile the bootloader to a .cof file.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+env.Program(target = targetName, source =
+  [&#39;bootloader/pic24_dspic33_bootloader.X/main.c&#39;,
+   &#39;bootloader/pic24_dspic33_bootloader.X/mem.c&#39;,
+   &#39;bootloader/pic24_dspic33_bootloader.X/pic24_uart-small.c&#39;,
+   &#39;lib/src/pic24_clockfreq.c&#39;,
+   &#39;lib/src/pic24_uart.c&#39;,
+   &#39;lib/src/pic24_configbits.c&#39;])
+</pre></div>
+</div>
+<p>Convert it to a .hex</p>
+<div class="highlight-c"><div class="highlight"><pre>
+bin2hex(targetName, env, &#39;bootloader&#39;)
+</pre></div>
+</div>
+<p>Copy the .hex to the hex/ directory.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+env.Command(&#39;../../hex/&#39; + targetName + &#39;.hex&#39;, targetName + &#39;.hex&#39;, Copy(&quot;$TARGET&quot;, &quot;$SOURCE&quot;))
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="SCons_build.py.html" title="SCons_build.py - Build all libraries and examples"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="SConstruct.py.html" title="SConstruct.py - Build all libraries and examples over many chips"
+             >previous</a> |</li>
+        <li><a href="contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="utilities.html" >Utilities</a> &raquo;</li>
+          <li><a href="SConstruct.py.html" >SConstruct.py - Build all libraries and examples over many chips</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

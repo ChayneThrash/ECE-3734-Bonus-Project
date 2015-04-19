@@ -1,0 +1,142 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>outcompare_contpulse.c - Generate an asymmetric square wave using output compare (OC1), continuous pulse mode &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="outcompare_squarewave.c - generates a square wave using output compare (PIC24F/H/E families)" href="outcompare_squarewave.c.html" />
+    <link rel="prev" title="timer32bit_switch_pulse_measure.c - Uses 32-bit timer to measure pulse width" href="timer32bit_switch_pulse_measure.c.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="outcompare_squarewave.c.html" title="outcompare_squarewave.c - generates a square wave using output compare (PIC24F/H/E families)"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="timer32bit_switch_pulse_measure.c.html" title="timer32bit_switch_pulse_measure.c - Uses 32-bit timer to measure pulse width"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="outcompare-contpulse-c-generate-an-asymmetric-square-wave-using-output-compare-oc1-continuous-pulse-mode">
+<h1>outcompare_contpulse.c - Generate an asymmetric square wave using output compare (OC1), continuous pulse mode<a class="headerlink" href="#outcompare-contpulse-c-generate-an-asymmetric-square-wave-using-output-compare-oc1-continuous-pulse-mode" title="Permalink to this headline">¶</a></h1>
+<p>Generate an asymmetric square wave using output compare (OC1), continuous pulse mode.
+If you wish greater accuracy, then use a clock choice with an external crystal, such as:
+CLOCK_CONFIG=PRIPLL_8MHzCrystal_40MHzFCY
+Remove this macro if you wish to use the internal oscillator.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+
+<span class="cp">#include &quot;pic24_all.h&quot;</span>
+
+<span class="cp">#ifndef SQWAVE_PWHIGH</span>
+<span class="cp">#define SQWAVE_PWHIGH 2000   </span><span class="c1">// desired PW High, in us</span>
+<span class="cp">#endif</span>
+<span class="cp">#ifndef SQWAVE_PERIOD</span>
+<span class="cp">#define SQWAVE_PERIOD 20000  </span><span class="c1">// desired period, in us</span>
+<span class="cp">#endif</span>
+
+
+<span class="kt">void</span>  <span class="nf">configTimer2</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">T2CON</span> <span class="o">=</span> <span class="n">T2_OFF</span> <span class="o">|</span> <span class="n">T2_IDLE_CON</span> <span class="o">|</span> <span class="n">T2_GATE_OFF</span>
+          <span class="o">|</span> <span class="n">T2_32BIT_MODE_OFF</span>
+          <span class="o">|</span> <span class="n">T2_SOURCE_INT</span>
+          <span class="o">|</span> <span class="n">T2_PS_1_64</span> <span class="p">;</span>  <span class="c1">//1 tick = 1.6 us at FCY=40 MHz</span>
+  <span class="n">PR2</span> <span class="o">=</span> <span class="n">usToU16Ticks</span><span class="p">(</span><span class="n">SQWAVE_PERIOD</span><span class="p">,</span> <span class="n">getTimerPrescale</span><span class="p">(</span><span class="n">T2CONbits</span><span class="p">));</span>
+  <span class="n">TMR2</span>  <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>       <span class="c1">//clear timer2 value</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">configOutputCompare1</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">T2CONbits</span><span class="p">.</span><span class="n">TON</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>       <span class="c1">//disable Timer when configuring Output compare</span>
+  <span class="n">CONFIG_RB8_AS_DIG_OUTPUT</span><span class="p">();</span>
+<span class="cp">#if (defined(__dsPIC33E__) || defined(__PIC24E__))</span>
+  <span class="n">CONFIG_OC1_TO_RP</span><span class="p">(</span><span class="mi">40</span><span class="p">);</span>        <span class="c1">//map OC1 to RB8/RP40</span>
+<span class="cp">#else</span>
+  <span class="n">CONFIG_OC1_TO_RP</span><span class="p">(</span><span class="mi">8</span><span class="p">);</span>        <span class="c1">//map OC1 to RB8/RP13</span>
+<span class="cp">#endif</span>
+<span class="c1">//initialized the primary,secondary compare registers</span>
+<span class="c1">//assumes TIMER2 initialized before OC1 so PRE bits are set</span>
+  <span class="n">OC1R</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>   <span class="c1">//go high when Timer2 == 0</span>
+  <span class="n">OC1RS</span> <span class="o">=</span> <span class="n">usToU16Ticks</span><span class="p">(</span><span class="n">SQWAVE_PWHIGH</span><span class="p">,</span> <span class="n">getTimerPrescale</span><span class="p">(</span><span class="n">T2CONbits</span><span class="p">));</span> <span class="c1">//go low when Timer2 == u16_sqwavePWHighTicks</span>
+<span class="c1">//turn on the compare toggle mode using Timer2</span>
+<span class="cp">#if (defined(__dsPIC33E__) || defined(__PIC24E__))</span>
+  <span class="n">OC1CON1</span> <span class="o">=</span> <span class="n">OC_TIMER2_SRC</span> <span class="o">|</span>     <span class="c1">//Timer2 source</span>
+            <span class="n">OC_CONTINUE_PULSE</span><span class="p">;</span>  <span class="c1">//Continuous pulse mode</span>
+  <span class="n">OC1CON2</span> <span class="o">=</span> <span class="mh">0x000C</span><span class="p">;</span>           <span class="c1">//sync source is Timer2.</span>
+<span class="cp">#else</span>
+  <span class="n">OC1CON</span> <span class="o">=</span> <span class="n">OC_TIMER2_SRC</span> <span class="o">|</span>     <span class="c1">//Timer2 source</span>
+           <span class="n">OC_CONTINUE_PULSE</span><span class="p">;</span>  <span class="c1">//Continuous pulse mode</span>
+<span class="cp">#endif</span>
+  <span class="n">_OC1IF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">configBasic</span><span class="p">(</span><span class="n">HELLO_MSG</span><span class="p">);</span>
+  <span class="n">configTimer2</span><span class="p">();</span>
+  <span class="n">configOutputCompare1</span><span class="p">();</span>
+  <span class="n">T2CONbits</span><span class="p">.</span><span class="n">TON</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>       <span class="c1">//turn on Timer2 to start sqwave</span>
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">doHeartbeat</span><span class="p">();</span> <span class="c1">//nothing to do, squarewave generated in hardware</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="outcompare_squarewave.c.html" title="outcompare_squarewave.c - generates a square wave using output compare (PIC24F/H/E families)"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="timer32bit_switch_pulse_measure.c.html" title="timer32bit_switch_pulse_measure.c - Uses 32-bit timer to measure pulse width"
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>int1_wakeup.c - Uses INT1 to wake from sleep mode. &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="squarewave.c - Generates a square wave using timer 2 and an ISR." href="squarewave.c.html" />
+    <link rel="prev" title="change_latency.c - measures ISR latency using a change notification interrupt" href="change_latency.c.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="squarewave.c.html" title="squarewave.c - Generates a square wave using timer 2 and an ISR."
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="change_latency.c.html" title="change_latency.c - measures ISR latency using a change notification interrupt"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="int1-wakeup-c-uses-int1-to-wake-from-sleep-mode">
+<h1>int1_wakeup.c - Uses INT1 to wake from sleep mode.<a class="headerlink" href="#int1-wakeup-c-uses-int1-to-wake-from-sleep-mode" title="Permalink to this headline">¶</a></h1>
+<p>Demonstrates the use of int1 interrupt to wake from Sleep mode. A pushbutton on a int1 pin is used to wake from Sleep mode.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+
+<span class="cp">#include &quot;pic24_all.h&quot;</span>
+
+</pre></div>
+</div>
+<p>Interrupt Service Routine for INT1</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="n">_ISR</span> <span class="nf">_INT1Interrupt</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">_INT1IF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>    <span class="c1">//clear the interrupt bit</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>Pushbutton configuration, uses RB13.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="kt">void</span> <span class="nf">config_pb</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">CONFIG_RB13_AS_DIG_INPUT</span><span class="p">();</span>
+  <span class="n">ENABLE_RB13_PULLUP</span><span class="p">();</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Wait for pull-up to take effect.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">DELAY_US</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="n">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">configBasic</span><span class="p">(</span><span class="n">HELLO_MSG</span><span class="p">);</span>
+  <span class="n">config_pb</span><span class="p">();</span>
+
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div>Configure INT1 interrupt.</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+  <span class="n">CONFIG_INT1_TO_RP</span><span class="p">(</span><span class="n">RB13_RP</span><span class="p">);</span>
+  <span class="n">_INT1IF</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>     <span class="c1">//Clear the interrupt flag</span>
+  <span class="n">_INT1IP</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>     <span class="c1">//Choose a priority</span>
+  <span class="n">_INT1EP</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>     <span class="c1">//negative edge triggerred</span>
+  <span class="n">_INT1IE</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>     <span class="c1">//enable INT1 interrupt</span>
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">outString</span><span class="p">(</span><span class="s">&quot;Entering Sleep mode, press button to wake.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="c1">//finish sending characters before sleeping</span>
+    <span class="n">WAIT_UNTIL_TRANSMIT_COMPLETE_UART1</span><span class="p">();</span>
+    <span class="n">SLEEP</span><span class="p">();</span>        <span class="c1">//macro for asm(&quot;pwrsav #0&quot;)</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="squarewave.c.html" title="squarewave.c - Generates a square wave using timer 2 and an ISR."
+             >next</a> |</li>
+        <li class="right" >
+          <a href="change_latency.c.html" title="change_latency.c - measures ISR latency using a change notification interrupt"
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

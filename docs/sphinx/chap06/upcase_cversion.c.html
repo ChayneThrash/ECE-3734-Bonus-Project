@@ -1,0 +1,111 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>upcase_cversion.c - Change a string to uppercase &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="aschex2byte.c" href="../chap07/aschex2byte.c.html" />
+    <link rel="prev" title="upcase.s - Change a string to uppercase" href="upcase.s.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../chap07/aschex2byte.c.html" title="aschex2byte.c"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="upcase.s.html" title="upcase.s - Change a string to uppercase"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="upcase-cversion-c-change-a-string-to-uppercase">
+<h1>upcase_cversion.c - Change a string to uppercase<a class="headerlink" href="#upcase-cversion-c-change-a-string-to-uppercase" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c"><div class="highlight"><pre>
+<span class="cp">#include &quot;pic24_all.h&quot;</span>
+<span class="cp">#include &lt;stdio.h&gt;</span>
+
+<span class="kt">void</span> <span class="nf">upcase</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">p</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">while</span> <span class="p">(</span><span class="o">*</span><span class="n">p</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">//convert to upper case</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">*</span><span class="n">p</span> <span class="o">&gt;</span> <span class="mh">0x60</span> <span class="o">&amp;&amp;</span>
+        <span class="o">*</span><span class="n">p</span> <span class="o">&lt;</span> <span class="mh">0x7B</span><span class="p">)</span>  <span class="p">{</span>
+      <span class="c1">//lowercase &#39;a&#39;-&#39;z&#39;, so</span>
+      <span class="c1">//convert to &#39;A&#39;-&#39;Z&#39;</span>
+      <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="o">*</span><span class="n">p</span> <span class="o">-</span> <span class="mh">0x20</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">p</span><span class="o">++</span><span class="p">;</span>  <span class="c1">//advance to next char</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">char</span> <span class="n">s1</span><span class="p">[]</span><span class="o">=</span><span class="s">&quot;Hello&quot;</span><span class="p">;</span>
+<span class="kt">char</span> <span class="n">s2</span><span class="p">[]</span><span class="o">=</span><span class="s">&quot;UPPER/lower&quot;</span><span class="p">;</span>
+
+<span class="kt">int</span> <span class="nf">main</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">upcase</span><span class="p">(</span><span class="n">s1</span><span class="p">);</span>
+  <span class="n">upcase</span><span class="p">(</span><span class="n">s2</span><span class="p">);</span>
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../chap07/aschex2byte.c.html" title="aschex2byte.c"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="upcase.s.html" title="upcase.s - Change a string to uppercase"
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

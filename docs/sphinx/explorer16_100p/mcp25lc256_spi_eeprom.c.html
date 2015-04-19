@@ -1,0 +1,227 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mcp25lc256_spi_eeprom.c - Demonstrate SPI usage &mdash; Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '4-Jun-2013',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation" href="../index.html" />
+    <link rel="up" title="Textbook examples" href="../textbook_examples.html" />
+    <link rel="next" title="dataXfer_echo.c - Demonstrates an echo program which includes usage of the data transfer protocol" href="../util/dataXfer_echo.c.html" />
+    <link rel="prev" title="rtcc.c - Demonstrates use of the Real Time Clock Calendar Module with an external 32.768 kHZ crystal for timekeeping." href="rtcc.c.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../util/dataXfer_echo.c.html" title="dataXfer_echo.c - Demonstrates an echo program which includes usage of the data transfer protocol"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="rtcc.c.html" title="rtcc.c - Demonstrates use of the Real Time Clock Calendar Module with an external 32.768 kHZ crystal for timekeeping."
+             accesskey="P">previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" accesskey="U">Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body">
+            
+  <div class="section" id="mcp25lc256-spi-eeprom-c-demonstrate-spi-usage">
+<h1>mcp25lc256_spi_eeprom.c - Demonstrate SPI usage<a class="headerlink" href="#mcp25lc256-spi-eeprom-c-demonstrate-spi-usage" title="Permalink to this headline">¶</a></h1>
+<p>SPI Example: Demonstrates SPI functions by reading/writing
+from that Microchip 25LC256 serial EEPROM that is on the
+Explorer-16 board.
+This is not tied to a particular textbook example, but has a similar
+structure to the Chapter 10 mcp24lc515_i2c_eeprom.c example that uses I2C.</p>
+<div class="highlight-c"><div class="highlight"><pre>
+
+<span class="cp">#include &quot;pic24_all.h&quot;</span>
+
+
+
+<span class="cp">#define CONFIG_SLAVE_ENABLE() CONFIG_RD12_AS_DIG_OUTPUT()</span>
+<span class="cp">#define SLAVE_ENABLE()        _LATD12 = 0  </span><span class="c1">//low true assertion</span>
+<span class="cp">#define SLAVE_DISABLE()       _LATD12 = 1</span>
+
+<span class="cp">#define EEPROM_RDSR  0x05   </span><span class="c1">//read status register command</span>
+<span class="cp">#define EEPROM_READ  0x03   </span><span class="c1">//read command</span>
+<span class="cp">#define EEPROM_WRITE 0x02   </span><span class="c1">//write command</span>
+<span class="cp">#define EEPROM_WENABLE 0x06   </span><span class="c1">//write command</span>
+
+<span class="cp">#define BLKSIZE 64</span>
+
+<span class="kt">void</span> <span class="nf">configSPI2</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c1">//spi clock = 40MHz/1*4*4 = 40MHz/16 = 2.5 MHz</span>
+  <span class="n">SPI2CON1</span> <span class="o">=</span> <span class="n">SEC_PRESCAL_4_1</span> <span class="o">|</span>     <span class="c1">//4:1 secondary prescale</span>
+             <span class="n">PRI_PRESCAL_4_1</span> <span class="o">|</span>     <span class="c1">//4:1 primary prescale</span>
+             <span class="n">CLK_POL_ACTIVE_HIGH</span> <span class="o">|</span> <span class="c1">//clock active high (CKP = 0)</span>
+             <span class="n">SPI_CKE_ON</span>          <span class="o">|</span> <span class="c1">//out changes active to inactive (CKE=1)</span>
+             <span class="n">SPI_MODE8_ON</span>        <span class="o">|</span> <span class="c1">//8-bit mode</span>
+             <span class="n">MASTER_ENABLE_ON</span><span class="p">;</span>     <span class="c1">//master mode</span>
+  <span class="n">SPI2STATbits</span><span class="p">.</span><span class="n">SPIEN</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>  <span class="c1">//enable SPI mode</span>
+  <span class="n">CONFIG_SLAVE_ENABLE</span><span class="p">();</span>       <span class="c1">//chip select for MCP41xxx</span>
+  <span class="n">SLAVE_DISABLE</span><span class="p">();</span>             <span class="c1">//disable the chip select</span>
+<span class="p">}</span>
+
+<span class="c1">//Assumes WDT is configured for longer than EEPROM write time</span>
+<span class="kt">void</span> <span class="nf">waitForWriteCompletion</span><span class="p">()</span> <span class="p">{</span>
+  <span class="kt">uint8_t</span> <span class="n">u8_spidata</span><span class="p">,</span><span class="n">u8_savedSWDTEN</span><span class="p">;</span>
+  <span class="n">u8_savedSWDTEN</span> <span class="o">=</span> <span class="n">_SWDTEN</span><span class="p">;</span>
+  <span class="n">_SWDTEN</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="c1">//enable WDT so that do not get stuck in infinite loop!</span>
+  <span class="k">do</span> <span class="p">{</span>
+    <span class="n">SLAVE_ENABLE</span><span class="p">();</span>
+    <span class="n">u8_spidata</span> <span class="o">=</span> <span class="n">ioMasterSPI2</span><span class="p">(</span><span class="n">EEPROM_RDSR</span><span class="p">);</span> <span class="c1">//send read status command</span>
+    <span class="n">u8_spidata</span> <span class="o">=</span> <span class="n">ioMasterSPI2</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>   <span class="c1">//get status back</span>
+    <span class="n">SLAVE_DISABLE</span><span class="p">();</span>
+  <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">u8_spidata</span> <span class="o">&amp;</span> <span class="mh">0x01</span><span class="p">);</span>  <span class="c1">//LSB of status is write-in-progress flag</span>
+  <span class="n">_SWDTEN</span> <span class="o">=</span> <span class="n">u8_savedSWDTEN</span><span class="p">;</span>  <span class="c1">//restore WDT to original state</span>
+<span class="p">}</span>
+
+<span class="c1">//Write enable must be done before attempting a write.</span>
+<span class="kt">void</span> <span class="nf">writeEnable</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">SLAVE_ENABLE</span><span class="p">();</span>
+  <span class="n">ioMasterSPI2</span><span class="p">(</span><span class="n">EEPROM_WENABLE</span><span class="p">);</span>
+  <span class="n">SLAVE_DISABLE</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">memWrite25LC256</span><span class="p">(</span><span class="kt">uint16_t</span> <span class="n">u16_MemAddr</span><span class="p">,</span> <span class="kt">uint8_t</span> <span class="o">*</span><span class="n">pu8_buf</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">uint8_t</span> <span class="n">u8_AddrLo</span><span class="p">,</span> <span class="n">u8_AddrHi</span><span class="p">;</span>
+  <span class="kt">uint8_t</span> <span class="n">u8_i</span><span class="p">;</span>
+
+  <span class="n">u8_AddrLo</span> <span class="o">=</span> <span class="n">u16_MemAddr</span> <span class="o">&amp;</span> <span class="mh">0x00FF</span><span class="p">;</span>
+  <span class="n">u8_AddrHi</span> <span class="o">=</span> <span class="p">(</span><span class="n">u16_MemAddr</span> <span class="o">&gt;&gt;</span> <span class="mi">8</span><span class="p">);</span>
+
+  <span class="n">waitForWriteCompletion</span><span class="p">();</span>
+  <span class="n">writeEnable</span><span class="p">();</span> <span class="c1">//enable the write</span>
+  <span class="n">SLAVE_ENABLE</span><span class="p">();</span>
+  <span class="n">ioMasterSPI2</span><span class="p">(</span><span class="n">EEPROM_WRITE</span><span class="p">);</span>
+  <span class="n">ioMasterSPI2</span><span class="p">(</span><span class="n">u8_AddrHi</span><span class="p">);</span>
+  <span class="n">ioMasterSPI2</span><span class="p">(</span><span class="n">u8_AddrLo</span><span class="p">);</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u8_i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">&lt;</span> <span class="n">BLKSIZE</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">ioMasterSPI2</span><span class="p">(</span><span class="n">pu8_buf</span><span class="p">[</span><span class="n">u8_i</span><span class="p">]);</span>
+  <span class="p">}</span>
+  <span class="n">SLAVE_DISABLE</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">memRead25LC256</span><span class="p">(</span><span class="kt">uint16_t</span> <span class="n">u16_MemAddr</span><span class="p">,</span> <span class="kt">uint8_t</span> <span class="o">*</span><span class="n">pu8_buf</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">uint8_t</span> <span class="n">u8_AddrLo</span><span class="p">,</span> <span class="n">u8_AddrHi</span><span class="p">;</span>
+  <span class="kt">uint8_t</span> <span class="n">u8_i</span><span class="p">;</span>
+
+  <span class="n">waitForWriteCompletion</span><span class="p">();</span>
+  <span class="n">u8_AddrLo</span> <span class="o">=</span> <span class="n">u16_MemAddr</span> <span class="o">&amp;</span> <span class="mh">0x00FF</span><span class="p">;</span>
+  <span class="n">u8_AddrHi</span> <span class="o">=</span> <span class="p">(</span><span class="n">u16_MemAddr</span> <span class="o">&gt;&gt;</span> <span class="mi">8</span><span class="p">);</span>
+  <span class="n">SLAVE_ENABLE</span><span class="p">();</span>
+  <span class="n">ioMasterSPI2</span><span class="p">(</span><span class="n">EEPROM_READ</span><span class="p">);</span>
+  <span class="n">ioMasterSPI2</span><span class="p">(</span><span class="n">u8_AddrHi</span><span class="p">);</span>
+  <span class="n">ioMasterSPI2</span><span class="p">(</span><span class="n">u8_AddrLo</span><span class="p">);</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">u8_i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">&lt;</span><span class="n">BLKSIZE</span> <span class="p">;</span> <span class="n">u8_i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">pu8_buf</span><span class="p">[</span><span class="n">u8_i</span><span class="p">]</span> <span class="o">=</span> <span class="n">ioMasterSPI2</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="p">;</span>  <span class="c1">//get one byte</span>
+  <span class="p">}</span>
+  <span class="n">SLAVE_DISABLE</span><span class="p">();</span>
+<span class="p">}</span>
+
+
+<span class="kt">int</span> <span class="nf">main</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">uint8_t</span> <span class="n">au8_buf</span><span class="p">[</span><span class="n">BLKSIZE</span><span class="p">];</span>  <span class="c1">//holds data for EEPROM I/O</span>
+  <span class="kt">uint16_t</span> <span class="n">u16_MemAddr</span><span class="p">;</span>
+  <span class="kt">uint8_t</span> <span class="n">u8_Mode</span><span class="p">;</span>
+
+  <span class="n">configBasic</span><span class="p">(</span><span class="n">HELLO_MSG</span><span class="p">);</span>
+  <span class="n">configSPI2</span><span class="p">();</span>             <span class="c1">//configure SPI2 Module</span>
+  <span class="n">outString</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">Enter &#39;w&#39; for write mode, anything else reads: &quot;</span><span class="p">);</span>
+  <span class="n">u8_Mode</span> <span class="o">=</span> <span class="n">inCharEcho</span><span class="p">();</span>
+  <span class="n">outString</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="n">u16_MemAddr</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>     <span class="c1">//start at location 0 in memory</span>
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">uint8_t</span> <span class="n">u8_i</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">u8_Mode</span> <span class="o">==</span> <span class="sc">&#39;w&#39;</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">outString</span><span class="p">(</span><span class="s">&quot;Enter 64 chars.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+      <span class="c1">//first two buffer locations reserved for starting address</span>
+      <span class="k">for</span> <span class="p">(</span><span class="n">u8_i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">&lt;</span> <span class="n">BLKSIZE</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">au8_buf</span><span class="p">[</span><span class="n">u8_i</span><span class="p">]</span> <span class="o">=</span> <span class="n">inCharEcho</span><span class="p">();</span>
+      <span class="p">}</span>
+      <span class="n">outString</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">Doing Write</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><blockquote>
+<div>write same string twice to check Write Busy polling</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<div class="highlight-c"><div class="highlight"><pre>
+      <span class="n">memWrite25LC256</span><span class="p">(</span><span class="n">u16_MemAddr</span><span class="p">,</span> <span class="n">au8_buf</span><span class="p">);</span> <span class="c1">// do write</span>
+      <span class="n">u16_MemAddr</span> <span class="o">=</span> <span class="n">u16_MemAddr</span> <span class="o">+</span> <span class="n">BLKSIZE</span><span class="p">;</span>
+      <span class="n">memWrite25LC256</span><span class="p">(</span><span class="n">u16_MemAddr</span><span class="p">,</span><span class="n">au8_buf</span><span class="p">);</span> <span class="c1">// do write</span>
+      <span class="n">u16_MemAddr</span> <span class="o">=</span> <span class="n">u16_MemAddr</span> <span class="o">+</span> <span class="n">BLKSIZE</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="n">memRead25LC256</span><span class="p">(</span><span class="n">u16_MemAddr</span><span class="p">,</span><span class="n">au8_buf</span><span class="p">);</span> <span class="c1">// do read</span>
+      <span class="k">for</span> <span class="p">(</span><span class="n">u8_i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">&lt;</span> <span class="n">BLKSIZE</span><span class="p">;</span> <span class="n">u8_i</span><span class="o">++</span><span class="p">)</span> <span class="n">outChar</span><span class="p">(</span><span class="n">au8_buf</span><span class="p">[</span><span class="n">u8_i</span><span class="p">]);</span>
+      <span class="n">outString</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">Any key continues read...</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+      <span class="n">inChar</span><span class="p">();</span>
+      <span class="n">u16_MemAddr</span> <span class="o">=</span> <span class="n">u16_MemAddr</span> <span class="o">+</span> <span class="n">BLKSIZE</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../util/dataXfer_echo.c.html" title="dataXfer_echo.c - Demonstrates an echo program which includes usage of the data transfer protocol"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="rtcc.c.html" title="rtcc.c - Demonstrates use of the Real Time Clock Calendar Module with an external 32.768 kHZ crystal for timekeeping."
+             >previous</a> |</li>
+        <li><a href="../contents.html">Microcontrollers: From Assembly Language to C Using the PIC24 family, second edition 4-Jun-2013 documentation</a> &raquo;</li>
+          <li><a href="../textbook_examples.html" >Textbook examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan A. Jones, Robert B. Reese, and J. W. Bruce.
+      Last updated on Oct 30, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>
