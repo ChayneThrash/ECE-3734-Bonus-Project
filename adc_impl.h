@@ -1,8 +1,9 @@
 #ifndef __ADC_IMPL_H_
 #define __ADC_IMPL_H_
+//#include "stdint.h"
 
 void config_adc();
-int getSample();
+float getSample();
 
 
 #endif //__ADC_IMPL_H_
