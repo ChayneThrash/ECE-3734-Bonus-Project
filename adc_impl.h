@@ -3,7 +3,7 @@
 //#include "stdint.h"
 
 void config_adc();
-float getSample();
+float get_sample();
 
 
 #endif //__ADC_IMPL_H_
