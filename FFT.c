@@ -27,23 +27,23 @@
 #include "FFT.h"
 
 // temp array
-float  ReXX[FFT_SIZE];
-float  ImXX[FFT_SIZE];
+float ReXX[FFT_size];
+float ImXX[FFT_size];
 
 /* FFT */
-void fft(float * Rex, float * Imx, float * ReX, float * ImX){
+void fft(float* Rex, float* Imx, float* ReX, float* ImX){
   /* Calculate FFT by a recursion. */
-  fft_rec(FFT_SIZE, 0, 1, Rex, Imx, ReX, ImX, ReXX, ImXX);
+  fft_rec(FFT_size, 0, 1, Rex, Imx, ReX, ImX, ReXX, ImXX);
 }
 
 /* FFT recursion */
-void fft_rec(int N, int offset, int delta, float * Rex, float * Imx, float * ReX, float * ImX, float * ReXX, float * ImXX)
+void fft_rec(int N, int offset, int delta, float* Rex, float* Imx, float* ReX, float* ImX, float* ReXX, float* ImXX)
 {
   int N2 = N/2;            /* half the number of points in FFT */
   int k;                   /* generic index */
-  float  cs, sn;           /* cosine and sine */
+  float cs, sn;           /* cosine and sine */
   int k00, k01, k10, k11;  /* indices for butterflies */
-  float  tmp0, tmp1;       /* temporary storage */
+  float tmp0, tmp1;       /* temporary storage */
 
   if(N != 2)  /* Perform recursive step. */
     {
@@ -56,7 +56,7 @@ void fft_rec(int N, int offset, int delta, float * Rex, float * Imx, float * ReX
         {
           k00 = offset + k*delta;    k01 = k00 + N2*delta;
           k10 = offset + 2*k*delta;  k11 = k10 + delta;
-          cs = cos(TWO_PI*k/(float )N); sn = sin(TWO_PI*k/(float )N);
+          cs = cos(TWO_PI*k/(float)N); sn = sin(TWO_PI*k/(float)N);
           tmp0 = cs * ReXX[k11] + sn * ImXX[k11];
           tmp1 = cs * ImXX[k11] - sn * ReXX[k11];
           ReX[k01] = ReXX[k10] - tmp0;
@@ -76,11 +76,11 @@ void fft_rec(int N, int offset, int delta, float * Rex, float * Imx, float * ReX
 }
 
 // Calculates the magnitude of the real and imaginary parts of the FFT
-float  mag(float  x, float  y){
+float mag(float x, float y){
     return sqrt(x*x + y*y);
 }
 
-void Amag(int size, float * x, float * y, float * z){
+void Amag(int size, float* x, float* y, float* z){
     int i = 0;
     while(i<size){
        z[i] = mag(x[i],y[i]);
@@ -89,20 +89,20 @@ void Amag(int size, float * x, float * y, float * z){
 }
 
 //Basic peak detection. returns aproximate fundamental frequency
-float  getPeak(float  *Xmag){
+float getPeak(float *Xmag){
     int peak_index = 0;
-    float  peak_amp = 0.0;
-    float  freq = 0.0;
+    float peak_amp;
+    float freq;
     //interpolation variables
-    float  interp_factor = 0.0;
+    float interp_factor;
     
-    float  alpha = 0.0;   //magnitude at peak_index - 1
-    float  beta = 0.0;    //magnitude at the peak
-    float  gamma = 0.0;   //magnitude at peak_index + 1
+    float alpha;   //magnitude at peak_index - 1
+    float beta;    //magnitude at the peak
+    float gamma;   //magnitude at peak_index + 1
 
     // Max detection
     int i = 1;              // skip the first bin (DC offset)
-    while(i<FFT_SIZE/2){
+    while(i<FFT_size/2){
         if(Xmag[i] > peak_amp) {
             peak_index = i;
             peak_amp = Xmag[i];
@@ -127,7 +127,7 @@ float  getPeak(float  *Xmag){
     //printf("%d\t%d\t%d\n",(int)alpha,(int)beta,(int)gamma);
 
 //    freq = (peak_index) *  2.0 * fs / FFT_size;
-    freq = (peak_index+interp_factor) * fs / FFT_SIZE;
+    freq = (peak_index+interp_factor) * fs / FFT_size;
     return freq;
 }
 
