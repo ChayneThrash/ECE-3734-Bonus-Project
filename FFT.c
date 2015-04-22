@@ -31,7 +31,8 @@ float  ReXX[FFT_SIZE];
 float  ImXX[FFT_SIZE];
 
 /* FFT */
-void fft(float * Rex, float * Imx, float * ReX, float * ImX){
+void fft(float * Rex, float * Imx, float * ReX, float * ImX)
+{
   /* Calculate FFT by a recursion. */
   fft_rec(FFT_SIZE, 0, 1, Rex, Imx, ReX, ImX, ReXX, ImXX);
 }
@@ -76,11 +77,13 @@ void fft_rec(int N, int offset, int delta, float * Rex, float * Imx, float * ReX
 }
 
 // Calculates the magnitude of the real and imaginary parts of the FFT
-float  mag(float  x, float  y){
+float  mag(float  x, float  y)
+{
     return sqrt(x*x + y*y);
 }
 
-void Amag(int size, float * x, float * y, float * z){
+void Amag(int size, float * x, float * y, float * z)
+{
     int i = 0;
     while(i<size){
        z[i] = mag(x[i],y[i]);
@@ -89,7 +92,8 @@ void Amag(int size, float * x, float * y, float * z){
 }
 
 //Basic peak detection. returns aproximate fundamental frequency
-float  getPeak(float  *Xmag){
+float  getPeak(float  *Xmag)
+{
     int peak_index = 0;
     float  peak_amp = 0.0;
     float  freq = 0.0;
@@ -115,7 +119,8 @@ float  getPeak(float  *Xmag){
     // therefore 2 indecies from the peak will be away from the main lobe
     // the main lobe should be 2-4  times the side lobe to be concidered a peak
 
-    if(Xmag[peak_index] < 2000 ){
+    if(Xmag[peak_index] < 2000 )
+    {
         return 0;
     }
 
@@ -124,46 +129,8 @@ float  getPeak(float  *Xmag){
     beta  = Xmag[peak_index];
     gamma =  Xmag[peak_index+1];
     interp_factor = 0.5*(alpha-gamma) / (alpha - 2*beta + gamma);
-    //printf("%d\t%d\t%d\n",(int)alpha,(int)beta,(int)gamma);
 
-//    freq = (peak_index) *  2.0 * fs / FFT_size;
     freq = (peak_index+interp_factor) * fs / FFT_SIZE;
     return freq;
 }
-
-  ////////////////////////////////FFT TEST/////////////////////////////////////
-//  //Generate a sine wave
-//  int i;                    // generic index
-//  for(i = 0;i<256;i++){
-//      Rex[i] = sin(TWO_PI*i*10/255);
-//      Imx[i] = 0;
-//      printf("%d: %d",i,(int)Rex[i]);
-//  }
-
-  //* Calculate FFT.
-  /*
-  printf("befor FFT\n");
-  fft(x, X);
-  printf("after FFT\n");
-  */
-    //getPeak(X)
-
-
-  //* Print time-domain samples and resulting frequency-domain samples.
- /*
-  /change to mag(X)
-  printf("\nx(n):");
-  for(i=0; i<FFT_SIZE; i++) printf("\n   n=%d: %12f %12f", i, x[i][0], x[i][1]);
-  printf("\nX(k):");
-  for(i=0; i<FFT_SIZE; i++) printf("\n   k=%d: %12f %12f", i, X[i][0], X[i][1]);
-*/
-
-  //* Clear time-domain samples and calculate IFFT.
-  //for(i=0; i<FFT_SIZE; i++) x[i][0] = x[i][1] = 0;
-  //ifft(x, X);
-
-  //* Print recovered time-domain samples.
- // printf("\nx(n):");
- // for(i=0; i<FFT_SIZE; i++) printf("\n   n=%d: %12f %12f", i, x[i][0], x[i][1]);
-////////////////////////////////////////////////////////////////////////////////
  

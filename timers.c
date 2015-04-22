@@ -23,7 +23,8 @@ void configTimer2(void)
     T2CONbits.TON = 1;
 }
 
-void _ISR _T2Interrupt(void) {
+void _ISR _T2Interrupt(void)
+{
   //Sample from the ADC
     append_sample(get_sample());
   // Clear the timer interrupt bit

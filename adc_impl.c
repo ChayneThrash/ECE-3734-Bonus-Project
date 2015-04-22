@@ -10,7 +10,8 @@ void config_adc()
     configADC1_ManualCH0(MIC_INPUT, 31, ADC_12BIT_FLAG );
 }
 
-float get_sample(){
+float get_sample()
+{
     return (float) convertADC1();
 }
 
