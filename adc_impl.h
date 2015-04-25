@@ -2,8 +2,8 @@
 #define __ADC_IMPL_H_
 //#include "stdint.h"
 
-void config_adc();
-float get_sample();
+void configADC1();
+float getSampleFromMic();
 
 
 #endif //__ADC_IMPL_H_

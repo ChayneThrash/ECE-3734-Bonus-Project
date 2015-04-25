@@ -22,7 +22,8 @@ struct MicSamplesManager
 
 extern struct MicSamplesManager samples_manager;
 
-void append_sample(float sample);
+void appendSample(float sample);
+void initializeImaginary();
 
 #endif	/* MICSAMPLESMANAGER_H */
 

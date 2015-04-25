@@ -10,13 +10,13 @@
 
 void configTimer2(void);
 
-void inline timer2_Off()
+void inline timer2Off()
 {
     _T2IE = 0;
     _T2IP = 0;
 }
 
-void inline timer2_On()
+void inline timer2On()
 {
     _T2IE = 1;
     _T2IP = 1;

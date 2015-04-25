@@ -26,7 +26,7 @@ void configTimer2(void)
 void _ISR _T2Interrupt(void)
 {
   //Sample from the ADC
-    append_sample(get_sample());
+    appendSample(getSampleFromMic());
   // Clear the timer interrupt bit
   _T2IF = 0;
 }
