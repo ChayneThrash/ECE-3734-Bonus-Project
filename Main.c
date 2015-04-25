@@ -16,15 +16,28 @@ void inline config_All()
     samples_manager.num_samples = 0;
 }
 
-void inline processSamples(float* new_note, float* old_note, float* Xmag)
+float update_state(float freq){
+    if(freq > 148 && freq < 157){return 154.0;}   //D_STEING
+    if(freq > 185 && freq < 216){return 190.0;}   //G_STRING
+    if(freq > 226 && freq < 257){return 249.0;}   //B_STRING
+    if(freq > 310 && freq < 345){return 333.0;}   //E_STRING
+    if(freq > 1000 && freq < 1400){return 1200.0;}//WHISTLE
+    else{return 0.0;}                             //SILENT
+}
+
+void inline processSamples(float* new_note, float* tuned_note, float* Xmag)
 {
     samples_manager.num_samples = 0;
 
     fft(samples_manager.re_time_samples, samples_manager.im_time_samples, samples_manager.re_freq_samples, samples_manager.im_freq_samples);
     Amag(FFT_SIZE,samples_manager.re_freq_samples,samples_manager.im_freq_samples,Xmag);
-    *old_note = *new_note;
     *new_note = getPeak(Xmag);
+    *tuned_note = update_state(*new_note);
     printf("frequency: %d\n",(int) *new_note);
+    if ((*new_note) > 1.8 * (*tuned_note))
+    {
+        *new_note /= 2;
+    }
 }
 
 void beginTuning()
@@ -32,16 +45,24 @@ void beginTuning()
     initializeImaginary(samples_manager.im_time_samples);
 
     float  Xmag[FFT_SIZE];
-    float  old_note = 0;
-    float  new_note = 0;
+    float tuned_note = 0.0;
+    float  new_note = 0.0;
     while(1)
     {
         if (samples_manager.num_samples == FFT_SIZE)
         {
             timer2Off();
-            processSamples(&new_note, &old_note, Xmag);
-            changeLed(new_note);
-            //Re-Enable sampling after FFT
+            if (SPL(FFT_SIZE, samples_manager.re_time_samples))
+            {
+                processSamples(&new_note, &tuned_note, Xmag);
+                setLEDs(tuned_note, new_note);
+            } 
+            else
+            {
+                LEDTn = 0;
+                LEDHi = 0;
+                LEDLo = 0;
+            }
             timer2On();
         }
         doHeartbeat();
