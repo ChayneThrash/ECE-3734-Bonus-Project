@@ -16,33 +16,50 @@
 #define LEDHi (_LATB14)     //indicates note is higher than expected frequency
 
 
-void inline configLED(){
+void inline configLeds(){
   CONFIG_LEDLo();
   CONFIG_LEDTn();
   CONFIG_LEDHi();
 }
 
-void inline setLEDs(float tuned_note, float new_note){
-    if(new_note < 1.0 || tuned_note < 1){
-        LEDLo = 0;
-        LEDHi = 0;
-        LEDTn = 0;
-    } else {
-            if(new_note < tuned_note*0.995){
+void inline ledsOff()
+{
+    LEDLo = 0;
+    LEDHi = 0;
+    LEDTn = 0;
+}
+
+void inline setLeds(float tuned_note, float new_note){
+    if(new_note < 1.0 || tuned_note < 1)
+    {
+        ledsOff();
+    }
+    else
+    {
+            if(new_note < tuned_note*0.995)
+            {
                 LEDLo = 1;
                 LEDHi = 0;
-            } else{
+            } 
+            else
+            {
                 LEDLo = 0;
             }
-            if(new_note > tuned_note*1.005){
+            if(new_note > tuned_note*1.005)
+            {
                 LEDLo = 0;
                 LEDHi = 1;
-            }else{
+            } 
+            else
+            {
                 LEDHi = 0;
             }
-            if(new_note < tuned_note*1.01 && new_note > tuned_note*0.99) {
+            if(new_note < tuned_note*1.01 && new_note > tuned_note*0.99)
+            {
                 LEDTn = 1;
-            } else{
+            } 
+            else
+            {
                 LEDTn = 0;
             }
     }

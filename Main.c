@@ -10,14 +10,14 @@
 void inline config_All()
 {
     configBasic(HELLO_MSG);
-    configLED();
+    configLeds();
     configTimer2();
     configADC1();
     samples_manager.num_samples = 0;
 }
 
-float update_state(float freq){
-    if(freq > 148 && freq < 157){return 154.0;}   //D_STEING
+float detectTuningNote(float freq){
+    if(freq > 148 && freq < 157){return 154.0;}   //D_STRING
     if(freq > 185 && freq < 216){return 190.0;}   //G_STRING
     if(freq > 226 && freq < 257){return 249.0;}   //B_STRING
     if(freq > 310 && freq < 345){return 333.0;}   //E_STRING
@@ -27,12 +27,10 @@ float update_state(float freq){
 
 void inline processSamples(float* new_note, float* tuned_note, float* Xmag)
 {
-    samples_manager.num_samples = 0;
-
     fft(samples_manager.re_time_samples, samples_manager.im_time_samples, samples_manager.re_freq_samples, samples_manager.im_freq_samples);
     Amag(FFT_SIZE,samples_manager.re_freq_samples,samples_manager.im_freq_samples,Xmag);
     *new_note = getPeak(Xmag);
-    *tuned_note = update_state(*new_note);
+    *tuned_note = detectTuningNote(*new_note);
     printf("frequency: %d\n",(int) *new_note);
     if ((*new_note) > 1.8 * (*tuned_note))
     {
@@ -52,16 +50,15 @@ void beginTuning()
         if (samples_manager.num_samples == FFT_SIZE)
         {
             timer2Off();
+            samples_manager.num_samples = 0;
             if (SPL(FFT_SIZE, samples_manager.re_time_samples))
             {
                 processSamples(&new_note, &tuned_note, Xmag);
-                setLEDs(tuned_note, new_note);
+                setLeds(tuned_note, new_note);
             } 
             else
             {
-                LEDTn = 0;
-                LEDHi = 0;
-                LEDLo = 0;
+                ledsOff();
             }
             timer2On();
         }
