@@ -16,7 +16,8 @@ void inline config_All()
     samples_manager.num_samples = 0;
 }
 
-float detectTuningNote(float freq){
+float detectTuningNote(float freq)
+{
     if(freq > 148 && freq < 157){return 154.0;}   //D_STRING
     if(freq > 185 && freq < 216){return 190.0;}   //G_STRING
     if(freq > 226 && freq < 257){return 249.0;}   //B_STRING
@@ -40,7 +41,7 @@ void inline processSamples(float* new_note, float* tuned_note, float* Xmag)
 
 void beginTuning()
 {
-    initializeImaginary(samples_manager.im_time_samples);
+    initializeImaginary();
 
     float  Xmag[FFT_SIZE];
     float tuned_note = 0.0;
@@ -51,7 +52,7 @@ void beginTuning()
         {
             timer2Off();
             samples_manager.num_samples = 0;
-            if (SPL(FFT_SIZE, samples_manager.re_time_samples))
+            if (SPL(FFT_SIZE, samples_manager.re_time_samples) > 50)
             {
                 processSamples(&new_note, &tuned_note, Xmag);
                 setLeds(tuned_note, new_note);

@@ -105,7 +105,7 @@ float SPL(int size, float* x){
 //Peak detection. returns aproximate fundamental frequency
 float getPeak(float *Xmag){
     int peak_index = 0;
-    float peak_amp;
+    float peak_amp = 0.0;
     float freq;
     //interpolation variables
     float interp_factor;
